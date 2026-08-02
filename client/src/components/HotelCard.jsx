@@ -1,0 +1,42 @@
+import { Link } from 'react-router-dom';
+import { MapPin } from 'lucide-react';
+import StarRating from './StarRating';
+
+const HotelCard = ({ hotel }) => {
+  const image = hotel.images?.[0]?.url;
+
+  return (
+    <Link
+      to={`/hotels/${hotel._id}`}
+      className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+    >
+      <div className="aspect-4/3 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+        {image && (
+          <img
+            src={image}
+            alt={hotel.name}
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          />
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{hotel.name}</h3>
+          {hotel.startingPrice != null && (
+            <p className="whitespace-nowrap text-sm font-semibold text-brand-600">
+              Rs. {hotel.startingPrice.toLocaleString()}
+              <span className="font-normal text-gray-400">/night</span>
+            </p>
+          )}
+        </div>
+        <p className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+          <MapPin className="h-4 w-4" /> {hotel.address?.city}, {hotel.address?.country}
+        </p>
+        <StarRating rating={hotel.avgRating || 0} reviewCount={hotel.reviewCount} size={14} />
+      </div>
+    </Link>
+  );
+};
+
+export default HotelCard;

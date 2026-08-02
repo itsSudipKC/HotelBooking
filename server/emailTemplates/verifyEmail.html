@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Verify your email</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:Segoe UI,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="background-color:#1d4ed8;padding:24px;text-align:center;">
+              <h1 style="color:#ffffff;margin:0;font-size:20px;">Hotel Booking System</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <h2 style="margin-top:0;color:#111827;font-size:18px;">Hi {{name}},</h2>
+              <p style="color:#374151;font-size:14px;line-height:22px;">
+                Thanks for registering. Please verify your email address to activate your account.
+              </p>
+              <div style="text-align:center;margin:32px 0;">
+                <a href="{{verifyUrl}}" style="background-color:#1d4ed8;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:bold;display:inline-block;">
+                  Verify Email
+                </a>
+              </div>
+              <p style="color:#6b7280;font-size:12px;line-height:20px;">
+                If the button doesn't work, copy and paste this link into your browser:<br />
+                <a href="{{verifyUrl}}" style="color:#1d4ed8;word-break:break-all;">{{verifyUrl}}</a>
+              </p>
+              <p style="color:#9ca3af;font-size:12px;">This link expires in 24 hours. If you didn't create this account, you can ignore this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
