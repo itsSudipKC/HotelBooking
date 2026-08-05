@@ -48,7 +48,7 @@ const ResetPasswordPage = ({ role }) => {
           Reset password
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+      <p className="mt-6 text-center text-sm text-gray-500">
         <Link to={`/${role}/login`} className="font-medium text-brand-600 hover:underline">
           Back to login
         </Link>

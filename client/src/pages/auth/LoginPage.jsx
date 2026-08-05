@@ -68,7 +68,7 @@ const LoginPage = ({ role }) => {
         </Button>
       </form>
       {role !== 'admin' && (
-        <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-6 text-center text-sm text-gray-500">
           Don&apos;t have an account?{' '}
           <Link to={`/${role}/register`} className="font-medium text-brand-600 hover:underline">
             Register

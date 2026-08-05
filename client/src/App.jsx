@@ -12,8 +12,23 @@ import FaqPage from './pages/public/FaqPage';
 import PrivacyPolicyPage from './pages/public/PrivacyPolicyPage';
 import TermsPage from './pages/public/TermsPage';
 import NotFoundPage from './pages/NotFoundPage';
-import DashboardPage from './pages/DashboardPage';
+import UserDashboardPage from './pages/dashboard/UserDashboardPage';
+import OwnerDashboardPage from './pages/dashboard/OwnerDashboardPage';
+import AdminDashboardPage from './pages/dashboard/AdminDashboardPage';
 import BookingComingSoonPage from './pages/user/BookingComingSoonPage';
+import UserManagementPage from './pages/admin/UserManagementPage';
+import UserDetailsPage from './pages/admin/UserDetailsPage';
+import OwnerManagementPage from './pages/admin/OwnerManagementPage';
+import AddOwnerPage from './pages/admin/AddOwnerPage';
+import OwnerDetailsPage from './pages/admin/OwnerDetailsPage';
+import HotelManagementPage from './pages/admin/HotelManagementPage';
+import AdminHotelDetailsPage from './pages/admin/AdminHotelDetailsPage';
+import BookingManagementPage from './pages/admin/BookingManagementPage';
+import AdminBookingDetailsPage from './pages/admin/AdminBookingDetailsPage';
+import MyHotelsPage from './pages/owner/MyHotelsPage';
+import HotelFormPage from './pages/owner/HotelFormPage';
+import OwnerHotelDetailsPage from './pages/owner/OwnerHotelDetailsPage';
+import RoomFormPage from './pages/owner/RoomFormPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
@@ -22,6 +37,7 @@ import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 
 const ROLES = ['user', 'owner', 'admin'];
 const GUEST_ROLES = ['user', 'owner']; // Admin has no self-registration flow
+const DASHBOARD_PAGES = { user: UserDashboardPage, owner: OwnerDashboardPage, admin: AdminDashboardPage };
 
 function App() {
   return (
@@ -45,21 +61,47 @@ function App() {
               <Route key={role} path={`/${role}/register`} element={<RegisterPage role={role} />} />
             ))}
 
-            {ROLES.map((role) => (
-              <Route key={role} path={`/${role}`}>
-                <Route path="login" element={<LoginPage role={role} />} />
-                <Route path="verify-email/:token" element={<VerifyEmailPage role={role} />} />
-                <Route path="forgot-password" element={<ForgotPasswordPage role={role} />} />
-                <Route path="reset-password/:token" element={<ResetPasswordPage role={role} />} />
+            {ROLES.map((role) => {
+              const RoleDashboard = DASHBOARD_PAGES[role];
+              return (
+                <Route key={role} path={`/${role}`}>
+                  <Route path="login" element={<LoginPage role={role} />} />
+                  <Route path="verify-email/:token" element={<VerifyEmailPage role={role} />} />
+                  <Route path="forgot-password" element={<ForgotPasswordPage role={role} />} />
+                  <Route path="reset-password/:token" element={<ResetPasswordPage role={role} />} />
 
-                <Route element={<ProtectedRoute role={role} />}>
-                  <Route path="dashboard" element={<DashboardPage role={role} />} />
-                  {role === 'user' && <Route path="bookings/new" element={<BookingComingSoonPage />} />}
+                  <Route element={<ProtectedRoute role={role} />}>
+                    <Route path="dashboard" element={<RoleDashboard />} />
+                    {role === 'user' && <Route path="bookings/new" element={<BookingComingSoonPage />} />}
+                    {role === 'owner' && (
+                      <>
+                        <Route path="hotels" element={<MyHotelsPage />} />
+                        <Route path="hotels/add" element={<HotelFormPage />} />
+                        <Route path="hotels/:id" element={<OwnerHotelDetailsPage />} />
+                        <Route path="hotels/:id/edit" element={<HotelFormPage />} />
+                        <Route path="hotels/:hotelId/rooms/add" element={<RoomFormPage />} />
+                        <Route path="rooms/:id/edit" element={<RoomFormPage />} />
+                      </>
+                    )}
+                    {role === 'admin' && (
+                      <>
+                        <Route path="users" element={<UserManagementPage />} />
+                        <Route path="users/:id" element={<UserDetailsPage />} />
+                        <Route path="owners" element={<OwnerManagementPage />} />
+                        <Route path="owners/add" element={<AddOwnerPage />} />
+                        <Route path="owners/:id" element={<OwnerDetailsPage />} />
+                        <Route path="hotels" element={<HotelManagementPage />} />
+                        <Route path="hotels/:id" element={<AdminHotelDetailsPage />} />
+                        <Route path="bookings" element={<BookingManagementPage />} />
+                        <Route path="bookings/:id" element={<AdminBookingDetailsPage />} />
+                      </>
+                    )}
+                  </Route>
+
+                  <Route index element={<Navigate to={`/${role}/login`} replace />} />
                 </Route>
-
-                <Route index element={<Navigate to={`/${role}/login`} replace />} />
-              </Route>
-            ))}
+              );
+            })}
           </Routes>
         </BrowserRouter>
       </AuthProvider>

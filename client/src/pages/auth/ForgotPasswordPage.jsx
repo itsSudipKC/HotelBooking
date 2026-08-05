@@ -34,7 +34,7 @@ const ForgotPasswordPage = ({ role }) => {
       subtitle="Enter your email and we'll send you a reset link."
     >
       {sent ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400">
+        <p className="text-sm text-emerald-600">
           If an account with that email exists, a reset link has been sent. Please check your inbox.
         </p>
       ) : (
@@ -54,7 +54,7 @@ const ForgotPasswordPage = ({ role }) => {
           </Button>
         </form>
       )}
-      <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+      <p className="mt-6 text-center text-sm text-gray-500">
         <Link to={`/${role}/login`} className="font-medium text-brand-600 hover:underline">
           Back to login
         </Link>

@@ -37,12 +37,12 @@ const VerifyEmailPage = ({ role }) => {
         {status === 'verifying' && (
           <>
             <Spinner />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Verifying your email...</p>
+            <p className="text-sm text-gray-500">Verifying your email...</p>
           </>
         )}
         {status === 'success' && (
           <>
-            <p className="text-sm text-emerald-600 dark:text-emerald-400">{message}</p>
+            <p className="text-sm text-emerald-600">{message}</p>
             <Link to={`/${role}/login`} className="text-sm font-medium text-brand-600 hover:underline">
               Continue to login
             </Link>
@@ -50,7 +50,7 @@ const VerifyEmailPage = ({ role }) => {
         )}
         {status === 'error' && (
           <>
-            <p className="text-sm text-red-600 dark:text-red-400">{message}</p>
+            <p className="text-sm text-red-600">{message}</p>
             <Link to={`/${role}/login`} className="text-sm font-medium text-brand-600 hover:underline">
               Back to login
             </Link>

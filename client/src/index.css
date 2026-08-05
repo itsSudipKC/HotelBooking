@@ -1,11 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-500: #2563eb;
-  --color-brand-600: #1d4ed8;
-  --color-brand-700: #1e40af;
+  --color-brand-50: #fff4f2;
+  --color-brand-100: #ffe6e1;
+  --color-brand-200: #ffccc2;
+  --color-brand-300: #ffa894;
+  --color-brand-400: #ff7a5c;
+  --color-brand-500: #f45a3c;
+  --color-brand-600: #dd4128;
+  --color-brand-700: #b8331e;
+  --color-brand-800: #93291a;
+  --color-brand-900: #782419;
 }
 
 html,
@@ -15,5 +20,5 @@ body,
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+  @apply bg-gray-50 text-gray-900 antialiased;
 }

@@ -5,7 +5,7 @@ const Accordion = ({ items }) => {
   const [openIndex, setOpenIndex] = useState(null);
 
   return (
-    <div className="flex flex-col divide-y divide-gray-200 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+    <div className="flex flex-col divide-y divide-gray-200 rounded-xl border border-gray-200">
       {items.map((item, index) => {
         const isOpen = openIndex === index;
         return (
@@ -13,12 +13,12 @@ const Accordion = ({ items }) => {
             <button
               type="button"
               onClick={() => setOpenIndex(isOpen ? null : index)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-medium text-gray-900 dark:text-gray-100"
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-medium text-gray-900"
             >
               {item.question}
               <ChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
-            {isOpen && <p className="px-5 pb-4 text-sm text-gray-600 dark:text-gray-400">{item.answer}</p>}
+            {isOpen && <p className="px-5 pb-4 text-sm text-gray-600">{item.answer}</p>}
           </div>
         );
       })}

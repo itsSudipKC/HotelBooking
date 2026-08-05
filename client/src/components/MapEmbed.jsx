@@ -6,9 +6,9 @@ const MapEmbed = ({ address, lat, lng }) => {
 
   if (!apiKey || !query) {
     return (
-      <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 text-center dark:border-gray-700 dark:bg-gray-900">
+      <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 text-center">
         <MapPin className="h-8 w-8 text-gray-400" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">{address || 'Location unavailable'}</p>
+        <p className="text-sm text-gray-500">{address || 'Location unavailable'}</p>
         <p className="text-xs text-gray-400">Map preview requires a Google Maps API key</p>
       </div>
     );

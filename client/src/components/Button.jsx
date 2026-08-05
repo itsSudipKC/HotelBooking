@@ -1,13 +1,13 @@
 const Button = ({ children, loading = false, variant = 'primary', className = '', disabled, ...props }) => {
   const variants = {
-    primary: 'bg-brand-600 hover:bg-brand-700 text-white disabled:bg-brand-300',
+    primary: 'bg-brand-600 hover:bg-brand-700 text-white shadow-sm hover:shadow disabled:bg-brand-300 disabled:shadow-none',
     secondary:
-      'bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700',
+      'bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 shadow-sm hover:shadow',
   };
 
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed ${variants[variant]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

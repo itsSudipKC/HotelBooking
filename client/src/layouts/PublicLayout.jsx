@@ -13,8 +13,8 @@ const PublicLayout = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-950">
-      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      <header className="sticky top-0 z-40 bg-white/90 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-2 text-lg font-semibold text-brand-600">
             <Hotel className="h-6 w-6" />
@@ -29,7 +29,7 @@ const PublicLayout = () => {
                 end={link.end}
                 className={({ isActive }) =>
                   `text-sm font-medium transition ${
-                    isActive ? 'text-brand-600' : 'text-gray-600 hover:text-brand-600 dark:text-gray-300'
+                    isActive ? 'text-brand-600' : 'text-gray-600 hover:text-brand-600'
                   }`
                 }
               >
@@ -41,19 +41,19 @@ const PublicLayout = () => {
           <div className="hidden items-center gap-3 md:flex">
             <Link
               to="/owner/login"
-              className="text-sm font-medium text-gray-500 hover:text-brand-600 dark:text-gray-400"
+              className="text-sm font-medium text-gray-500 hover:text-brand-600"
             >
               List your property
             </Link>
             <Link
               to="/user/login"
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-brand-500 hover:text-brand-600 dark:border-gray-700 dark:text-gray-200"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-brand-500 hover:text-brand-600"
             >
               Sign in
             </Link>
             <Link
               to="/user/register"
-              className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 hover:shadow"
             >
               Sign up
             </Link>
@@ -61,7 +61,7 @@ const PublicLayout = () => {
 
           <button
             type="button"
-            className="p-2 text-gray-600 md:hidden dark:text-gray-300"
+            className="p-2 text-gray-600 md:hidden"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Toggle menu"
           >
@@ -70,7 +70,7 @@ const PublicLayout = () => {
         </div>
 
         {menuOpen && (
-          <div className="border-t border-gray-200 px-4 py-4 md:hidden dark:border-gray-800">
+          <div className="border-t border-gray-200 px-4 py-4 md:hidden">
             <nav className="flex flex-col gap-4">
               {NAV_LINKS.map((link) => (
                 <NavLink
@@ -78,16 +78,16 @@ const PublicLayout = () => {
                   to={link.to}
                   end={link.end}
                   onClick={() => setMenuOpen(false)}
-                  className="text-sm font-medium text-gray-600 dark:text-gray-300"
+                  className="text-sm font-medium text-gray-600"
                 >
                   {link.label}
                 </NavLink>
               ))}
-              <hr className="border-gray-200 dark:border-gray-800" />
+              <hr className="border-gray-200" />
               <Link
                 to="/owner/login"
                 onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-gray-600 dark:text-gray-300"
+                className="text-sm font-medium text-gray-600"
               >
                 List your property
               </Link>
@@ -101,7 +101,7 @@ const PublicLayout = () => {
               <Link
                 to="/user/register"
                 onClick={() => setMenuOpen(false)}
-                className="rounded-md bg-brand-600 px-4 py-2 text-center text-sm font-medium text-white"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-center text-sm font-medium text-white"
               >
                 Sign up
               </Link>
@@ -114,20 +114,20 @@ const PublicLayout = () => {
         <Outlet />
       </main>
 
-      <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <footer className="border-t border-gray-200 bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4 lg:px-8">
           <div>
             <p className="flex items-center gap-2 text-lg font-semibold text-brand-600">
               <Hotel className="h-5 w-5" /> StayNepal
             </p>
-            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-3 text-sm text-gray-500">
               Find and book the perfect hotel for your next trip, anywhere in Nepal.
             </p>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Explore</h3>
-            <ul className="mt-3 space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <h3 className="text-sm font-semibold text-gray-900">Explore</h3>
+            <ul className="mt-3 space-y-2 text-sm text-gray-500">
               <li>
                 <Link to="/hotels" className="hover:text-brand-600">
                   All Hotels
@@ -152,8 +152,8 @@ const PublicLayout = () => {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Legal</h3>
-            <ul className="mt-3 space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <h3 className="text-sm font-semibold text-gray-900">Legal</h3>
+            <ul className="mt-3 space-y-2 text-sm text-gray-500">
               <li>
                 <Link to="/privacy-policy" className="hover:text-brand-600">
                   Privacy Policy
@@ -168,8 +168,8 @@ const PublicLayout = () => {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">For Partners</h3>
-            <ul className="mt-3 space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <h3 className="text-sm font-semibold text-gray-900">For Partners</h3>
+            <ul className="mt-3 space-y-2 text-sm text-gray-500">
               <li>
                 <Link to="/owner/login" className="hover:text-brand-600">
                   Hotel Owner Login
@@ -183,7 +183,7 @@ const PublicLayout = () => {
             </ul>
           </div>
         </div>
-        <div className="border-t border-gray-200 py-4 text-center text-xs text-gray-400 dark:border-gray-800">
+        <div className="border-t border-gray-200 py-4 text-center text-xs text-gray-400">
           © {new Date().getFullYear()} StayNepal. Built as a Final Year BCA Project.
         </div>
       </footer>

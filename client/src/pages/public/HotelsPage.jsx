@@ -85,7 +85,7 @@ const HotelsPage = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+      <h1 className="text-2xl font-semibold text-gray-900">
         {filters.city ? `Hotels in ${filters.city}` : 'All Hotels'}
       </h1>
 
@@ -98,13 +98,13 @@ const HotelsPage = () => {
 
         <div>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500">
               {loading ? 'Searching...' : `${result.pagination.total} hotels found`}
             </p>
             <select
               value={sort}
               onChange={(e) => updateSort(e.target.value)}
-              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800"
+              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -119,7 +119,7 @@ const HotelsPage = () => {
               <Spinner />
             </div>
           ) : result.hotels.length === 0 ? (
-            <p className="py-16 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="py-16 text-center text-sm text-gray-500">
               No hotels match your search. Try adjusting your filters.
             </p>
           ) : (

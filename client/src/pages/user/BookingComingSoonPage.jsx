@@ -5,9 +5,9 @@ const BookingComingSoonPage = () => {
   const hotelId = searchParams.get('hotelId');
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 px-4 text-center dark:bg-gray-950">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Booking flow coming soon</h1>
-      <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 px-4 text-center">
+      <h1 className="text-2xl font-semibold text-gray-900">Booking flow coming soon</h1>
+      <p className="max-w-md text-sm text-gray-500">
         We&apos;re putting the finishing touches on the booking and payment experience. Check back soon to complete
         your reservation.
       </p>

@@ -26,7 +26,7 @@ const FAQS = [
 
 const FaqPage = () => (
   <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-    <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">Frequently Asked Questions</h1>
+    <h1 className="text-3xl font-semibold text-gray-900">Frequently Asked Questions</h1>
     <div className="mt-8">
       <Accordion items={FAQS} />
     </div>

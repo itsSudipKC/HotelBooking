@@ -44,7 +44,7 @@ const HomePage = () => {
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Featured Hotels</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">Featured Hotels</h2>
           <Link to="/hotels" className="text-sm font-medium text-brand-600 hover:underline">
             View all
           </Link>
@@ -62,9 +62,9 @@ const HomePage = () => {
         )}
       </section>
 
-      <section className="bg-white py-16 dark:bg-gray-900">
+      <section className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Popular Destinations</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">Popular Destinations</h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {DESTINATIONS.map((dest) => (
               <Link
@@ -86,14 +86,14 @@ const HomePage = () => {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-12 text-center text-white sm:px-16">
+        <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-teal-600 to-teal-500 px-8 py-12 text-center text-white shadow-lg sm:px-16">
           <h2 className="text-2xl font-bold sm:text-3xl">Exclusive early-bird offers</h2>
-          <p className="mt-3 text-amber-50">
+          <p className="mt-3 text-teal-50">
             Save up to 20% when you book two weeks in advance. Discounts applied automatically at checkout.
           </p>
           <Link
             to="/hotels"
-            className="mt-6 inline-block rounded-md bg-white px-6 py-2.5 text-sm font-semibold text-amber-600 hover:bg-amber-50"
+            className="mt-6 inline-block rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-teal-700 shadow-sm transition hover:bg-teal-50"
           >
             Browse deals
           </Link>

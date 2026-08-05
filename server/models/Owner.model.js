@@ -23,6 +23,11 @@ const ownerSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    businessName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     avatar: {
       url: { type: String, default: '' },
       publicId: { type: String, default: '' },

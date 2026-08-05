@@ -95,3 +95,41 @@ export const sendContactMessageEmail = ({ name, email, subject, message }) => {
     variables: { name, email, subject, message },
   });
 };
+
+export const sendHotelApprovedEmail = ({ to, ownerName, hotelName }) =>
+  sendEmail({
+    to,
+    subject: `${hotelName} has been approved!`,
+    templateName: 'hotelApproved',
+    variables: { ownerName, hotelName },
+  });
+
+export const sendHotelRejectedEmail = ({ to, ownerName, hotelName, reason }) =>
+  sendEmail({
+    to,
+    subject: `${hotelName} needs changes before it can go live`,
+    templateName: 'hotelRejected',
+    variables: { ownerName, hotelName, reason },
+  });
+
+export const sendOwnerCreatedEmail = ({ to, name, tempPassword }) =>
+  sendEmail({
+    to,
+    subject: 'Your Hotel Owner account has been created',
+    templateName: 'ownerCreated',
+    variables: { name, email: to, tempPassword },
+  });
+
+export const sendNewHotelSubmissionEmail = ({ ownerName, hotelName, isResubmission }) => {
+  if (!process.env.ADMIN_EMAIL) {
+    console.warn('[email] ADMIN_EMAIL not configured — skipping new hotel submission email');
+    return Promise.resolve({ skipped: true });
+  }
+
+  return sendEmail({
+    to: process.env.ADMIN_EMAIL,
+    subject: isResubmission ? `Hotel resubmitted for review: ${hotelName}` : `New hotel submitted for review: ${hotelName}`,
+    templateName: 'newHotelSubmission',
+    variables: { ownerName, hotelName, actionLabel: isResubmission ? 'resubmitted' : 'submitted' },
+  });
+};

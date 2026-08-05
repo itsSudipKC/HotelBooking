@@ -23,7 +23,7 @@ const SearchBar = ({ initialValue = '', large = false, onSearch }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className={`flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-800 dark:bg-gray-900 ${large ? 'sm:p-3' : ''}`}
+      className={`flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-white p-2 shadow-sm ${large ? 'sm:p-3' : ''}`}
     >
       <Search className="ml-2 h-5 w-5 shrink-0 text-gray-400" />
       <input
@@ -31,7 +31,7 @@ const SearchBar = ({ initialValue = '', large = false, onSearch }) => {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search by hotel name, city, or country..."
-        className="flex-1 bg-transparent px-1 py-2 text-sm text-gray-900 outline-none dark:text-gray-100"
+        className="flex-1 bg-transparent px-1 py-2 text-sm text-gray-900 outline-none"
       />
       <button
         type="submit"

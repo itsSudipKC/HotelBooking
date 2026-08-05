@@ -6,7 +6,7 @@ const ImageGallery = ({ images = [], alt }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (!images.length) {
-    return <div className="aspect-video w-full rounded-xl bg-gray-100 dark:bg-gray-800" />;
+    return <div className="aspect-video w-full rounded-xl bg-gray-100" />;
   }
 
   const goTo = (delta) => {

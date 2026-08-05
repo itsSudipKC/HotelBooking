@@ -13,7 +13,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => {
         type="button"
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        className="rounded-md p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-800"
+        className="rounded-md p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40"
         aria-label="Previous page"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -26,7 +26,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => {
             type="button"
             onClick={() => onPageChange(p)}
             className={`h-9 w-9 rounded-md text-sm font-medium transition ${
-              p === page ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+              p === page ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             {p}
@@ -38,7 +38,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => {
         type="button"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
-        className="rounded-md p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-800"
+        className="rounded-md p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40"
         aria-label="Next page"
       >
         <ChevronRight className="h-4 w-4" />

@@ -10,9 +10,9 @@ const FilterSidebar = ({ filters, onChange }) => {
   };
 
   return (
-    <aside className="flex h-fit flex-col gap-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+    <aside className="flex h-fit flex-col gap-6 rounded-xl border border-gray-200 bg-white p-5">
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Price range (per night)</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">Price range (per night)</h3>
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -20,7 +20,7 @@ const FilterSidebar = ({ filters, onChange }) => {
             placeholder="Min"
             value={filters.minPrice}
             onChange={(e) => onChange({ ...filters, minPrice: e.target.value })}
-            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800"
+            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
           />
           <span className="text-gray-400">–</span>
           <input
@@ -29,16 +29,16 @@ const FilterSidebar = ({ filters, onChange }) => {
             placeholder="Max"
             value={filters.maxPrice}
             onChange={(e) => onChange({ ...filters, maxPrice: e.target.value })}
-            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800"
+            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
           />
         </div>
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Star rating</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">Star rating</h3>
         <div className="flex flex-col gap-2">
           {RATINGS.map((r) => (
-            <label key={r} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <label key={r} className="flex items-center gap-2 text-sm text-gray-600">
               <input
                 type="radio"
                 name="rating"
@@ -61,10 +61,10 @@ const FilterSidebar = ({ filters, onChange }) => {
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Amenities</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">Amenities</h3>
         <div className="flex flex-col gap-2">
           {AMENITIES.map((amenity) => (
-            <label key={amenity} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <label key={amenity} className="flex items-center gap-2 text-sm text-gray-600">
               <input type="checkbox" checked={filters.amenities.includes(amenity)} onChange={() => toggleAmenity(amenity)} />
               {amenity}
             </label>
