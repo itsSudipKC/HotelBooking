@@ -20,6 +20,8 @@ import MyBookingsPage from './pages/user/MyBookingsPage';
 import MyBookingDetailsPage from './pages/user/MyBookingDetailsPage';
 import ProfilePage from './pages/user/ProfilePage';
 import WishlistPage from './pages/user/WishlistPage';
+import PaymentPage from './pages/user/PaymentPage';
+import PaymentResultPage from './pages/user/PaymentResultPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import UserDetailsPage from './pages/admin/UserDetailsPage';
 import OwnerManagementPage from './pages/admin/OwnerManagementPage';
@@ -83,6 +85,8 @@ function App() {
                         <Route path="bookings/new" element={<NewBookingPage />} />
                         <Route path="bookings" element={<MyBookingsPage />} />
                         <Route path="bookings/:id" element={<MyBookingDetailsPage />} />
+                        <Route path="bookings/:id/pay" element={<PaymentPage />} />
+                        <Route path="payments/result" element={<PaymentResultPage />} />
                         <Route path="profile" element={<ProfilePage />} />
                         <Route path="wishlist" element={<WishlistPage />} />
                       </>

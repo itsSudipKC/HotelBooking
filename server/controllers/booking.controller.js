@@ -115,6 +115,7 @@ export const getMyBookingById = asyncHandler(async (req, res) => {
   const booking = await Booking.findOne({ _id: id, user: req.account._id })
     .populate('hotel', 'name images address')
     .populate('room', 'type price capacity')
+    .populate('payment')
     .lean();
 
   if (!booking) {

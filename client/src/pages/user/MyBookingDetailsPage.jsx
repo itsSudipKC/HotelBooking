@@ -73,6 +73,19 @@ const MyBookingDetailsPage = () => {
               Waiting for the hotel to confirm your request.
             </div>
           )}
+          {booking.status === 'confirmed' && booking.payment?.status === 'success' && (
+            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+              Payment received via {booking.payment.method === 'esewa' ? 'eSewa' : 'Khalti'}. You&apos;re all set.
+            </div>
+          )}
+          {booking.status === 'confirmed' && booking.payment?.status !== 'success' && (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-700">
+              <span>Your booking is confirmed — pay now to complete it.</span>
+              <Link to={`/user/bookings/${booking._id}/pay`}>
+                <Button className="shrink-0">Pay Now</Button>
+              </Link>
+            </div>
+          )}
 
           <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
             <h2 className="text-sm font-semibold text-gray-900">Stay details</h2>
