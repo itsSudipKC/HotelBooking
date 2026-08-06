@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, CheckCircle2, Clock, XCircle, BedDouble, Plus, Settings } from 'lucide-react';
+import { Building2, CheckCircle2, Clock, XCircle, BedDouble, Plus, Settings, CalendarRange } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import StatCard from '../../components/dashboard/StatCard';
 import Spinner from '../../components/Spinner';
@@ -64,13 +64,20 @@ const OwnerDashboardPage = () => {
         </div>
       )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+      <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Link
           to="/owner/hotels"
           className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm font-medium text-gray-900 shadow-sm transition hover:border-brand-500 hover:text-brand-600"
         >
           <Building2 className="h-5 w-5" />
           Manage Hotels
+        </Link>
+        <Link
+          to="/owner/bookings"
+          className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm font-medium text-gray-900 shadow-sm transition hover:border-brand-500 hover:text-brand-600"
+        >
+          <CalendarRange className="h-5 w-5" />
+          Booking Requests
         </Link>
         <div className="flex items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm font-medium text-gray-400">
           <Settings className="h-5 w-5" />

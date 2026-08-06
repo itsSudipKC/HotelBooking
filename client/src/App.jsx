@@ -15,7 +15,9 @@ import NotFoundPage from './pages/NotFoundPage';
 import UserDashboardPage from './pages/dashboard/UserDashboardPage';
 import OwnerDashboardPage from './pages/dashboard/OwnerDashboardPage';
 import AdminDashboardPage from './pages/dashboard/AdminDashboardPage';
-import BookingComingSoonPage from './pages/user/BookingComingSoonPage';
+import NewBookingPage from './pages/user/NewBookingPage';
+import MyBookingsPage from './pages/user/MyBookingsPage';
+import MyBookingDetailsPage from './pages/user/MyBookingDetailsPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import UserDetailsPage from './pages/admin/UserDetailsPage';
 import OwnerManagementPage from './pages/admin/OwnerManagementPage';
@@ -29,6 +31,8 @@ import MyHotelsPage from './pages/owner/MyHotelsPage';
 import HotelFormPage from './pages/owner/HotelFormPage';
 import OwnerHotelDetailsPage from './pages/owner/OwnerHotelDetailsPage';
 import RoomFormPage from './pages/owner/RoomFormPage';
+import OwnerBookingRequestsPage from './pages/owner/OwnerBookingRequestsPage';
+import OwnerBookingDetailsPage from './pages/owner/OwnerBookingDetailsPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
@@ -72,7 +76,13 @@ function App() {
 
                   <Route element={<ProtectedRoute role={role} />}>
                     <Route path="dashboard" element={<RoleDashboard />} />
-                    {role === 'user' && <Route path="bookings/new" element={<BookingComingSoonPage />} />}
+                    {role === 'user' && (
+                      <>
+                        <Route path="bookings/new" element={<NewBookingPage />} />
+                        <Route path="bookings" element={<MyBookingsPage />} />
+                        <Route path="bookings/:id" element={<MyBookingDetailsPage />} />
+                      </>
+                    )}
                     {role === 'owner' && (
                       <>
                         <Route path="hotels" element={<MyHotelsPage />} />
@@ -81,6 +91,8 @@ function App() {
                         <Route path="hotels/:id/edit" element={<HotelFormPage />} />
                         <Route path="hotels/:hotelId/rooms/add" element={<RoomFormPage />} />
                         <Route path="rooms/:id/edit" element={<RoomFormPage />} />
+                        <Route path="bookings" element={<OwnerBookingRequestsPage />} />
+                        <Route path="bookings/:id" element={<OwnerBookingDetailsPage />} />
                       </>
                     )}
                     {role === 'admin' && (

@@ -15,6 +15,8 @@ import adminHotelRoutes from './routes/adminHotel.routes.js';
 import adminBookingRoutes from './routes/adminBooking.routes.js';
 import ownerHotelRoutes from './routes/ownerHotel.routes.js';
 import ownerRoomRoutes from './routes/ownerRoom.routes.js';
+import bookingRoutes from './routes/booking.routes.js';
+import ownerBookingRoutes from './routes/ownerBooking.routes.js';
 import { apiRateLimiter } from './middleware/rateLimiter.middleware.js';
 import { notFoundHandler, errorHandler } from './middleware/error.middleware.js';
 
@@ -51,6 +53,8 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/owner', ownerDashboardRoutes);
 app.use('/api/owner/hotels', ownerHotelRoutes);
 app.use('/api/owner/rooms', ownerRoomRoutes);
+app.use('/api/owner/bookings', ownerBookingRoutes);
+app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminDashboardRoutes);
 app.use('/api/admin/users', adminUserRoutes);
 app.use('/api/admin/owners', adminOwnerRoutes);

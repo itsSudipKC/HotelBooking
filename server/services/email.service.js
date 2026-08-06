@@ -133,3 +133,29 @@ export const sendNewHotelSubmissionEmail = ({ ownerName, hotelName, isResubmissi
     variables: { ownerName, hotelName, actionLabel: isResubmission ? 'resubmitted' : 'submitted' },
   });
 };
+
+const formatDate = (date) => new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+export const sendBookingRequestEmail = ({ to, ownerName, hotelName, guestName, checkIn, checkOut }) =>
+  sendEmail({
+    to,
+    subject: `New booking request for ${hotelName}`,
+    templateName: 'bookingRequest',
+    variables: { ownerName, hotelName, guestName, checkIn: formatDate(checkIn), checkOut: formatDate(checkOut) },
+  });
+
+export const sendBookingConfirmedEmail = ({ to, guestName, hotelName, checkIn, checkOut }) =>
+  sendEmail({
+    to,
+    subject: `Booking confirmed at ${hotelName}`,
+    templateName: 'bookingConfirmed',
+    variables: { guestName, hotelName, checkIn: formatDate(checkIn), checkOut: formatDate(checkOut) },
+  });
+
+export const sendBookingRejectedEmail = ({ to, guestName, hotelName, reason }) =>
+  sendEmail({
+    to,
+    subject: `Your booking request for ${hotelName} was declined`,
+    templateName: 'bookingRejected',
+    variables: { guestName, hotelName, reason },
+  });

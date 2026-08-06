@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>New Booking Request</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:Segoe UI,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="background-color:#dd4128;padding:24px;text-align:center;">
+              <h1 style="color:#ffffff;margin:0;font-size:20px;">New Booking Request</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <h2 style="margin-top:0;color:#111827;font-size:18px;">Hi {{ownerName}},</h2>
+              <p style="color:#374151;font-size:14px;line-height:22px;">
+                <strong>{{guestName}}</strong> has requested to book a room at <strong>{{hotelName}}</strong>.
+              </p>
+              <p style="color:#374151;font-size:14px;line-height:22px;">
+                <strong>Check-in:</strong> {{checkIn}}<br />
+                <strong>Check-out:</strong> {{checkOut}}
+              </p>
+              <p style="color:#9ca3af;font-size:12px;">Accept or reject this request from your owner dashboard's Booking Requests page.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

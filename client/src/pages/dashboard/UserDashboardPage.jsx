@@ -1,24 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Search, CalendarCheck, Heart, UserCog } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import HotelCard from '../../components/HotelCard';
 import Spinner from '../../components/Spinner';
-import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../hooks/useToast';
+import { useUserSession } from '../../hooks/useUserSession';
 import { getFeaturedHotels } from '../../services/hotelService';
 
 const QUICK_LINKS = [
   { icon: Search, label: 'Browse Hotels', to: '/hotels', active: true },
-  { icon: CalendarCheck, label: 'My Bookings', active: false },
+  { icon: CalendarCheck, label: 'My Bookings', to: '/user/bookings', active: true },
   { icon: Heart, label: 'Wishlist', active: false },
   { icon: UserCog, label: 'Profile Settings', active: false },
 ];
 
 const UserDashboardPage = () => {
-  const { session, logout } = useAuth('user');
-  const toast = useToast();
-  const navigate = useNavigate();
+  const { account, handleLogout } = useUserSession();
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,14 +28,6 @@ const UserDashboardPage = () => {
       active = false;
     };
   }, []);
-
-  const handleLogout = async () => {
-    await logout();
-    toast.info('Logged out.');
-    navigate('/user/login');
-  };
-
-  const account = session?.account;
 
   return (
     <DashboardLayout role="user" accountName={account?.name} onLogout={handleLogout}>
