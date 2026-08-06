@@ -45,12 +45,13 @@ const HotelDetailsPage = () => {
   }, [id]);
 
   const handleBookNow = (roomId) => {
+    const bookingUrl = `/user/bookings/new?hotelId=${id}&roomId=${roomId}`;
     if (!isAuthenticated) {
-      toast.info('Please sign in to book a room.');
-      navigate('/user/login');
+      toast.info('Please sign in or create an account to book a room.');
+      navigate('/user/login', { state: { from: bookingUrl } });
       return;
     }
-    navigate(`/user/bookings/new?hotelId=${id}&roomId=${roomId}`);
+    navigate(bookingUrl);
   };
 
   if (loading) {

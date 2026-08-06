@@ -1,9 +1,10 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Spinner from './Spinner';
 
 const ProtectedRoute = ({ role }) => {
   const { isAuthenticated, isLoading } = useAuth(role);
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -14,7 +15,8 @@ const ProtectedRoute = ({ role }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={`/${role}/login`} replace />;
+    const from = `${location.pathname}${location.search}`;
+    return <Navigate to={`/${role}/login`} state={{ from }} replace />;
   }
 
   return <Outlet />;

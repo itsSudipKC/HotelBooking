@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../layouts/AuthLayout';
 import TextField from '../../components/TextField';
 import Button from '../../components/Button';
@@ -15,6 +15,7 @@ const ROLE_TITLES = {
 
 const LoginPage = ({ role }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { login } = useAuth(role);
   const [form, setForm] = useState({ email: '', password: '' });
@@ -29,7 +30,7 @@ const LoginPage = ({ role }) => {
     try {
       await login(form);
       toast.success('Logged in successfully.');
-      navigate(`/${role}/dashboard`);
+      navigate(location.state?.from || `/${role}/dashboard`);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

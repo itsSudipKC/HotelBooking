@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
-import { Hotel, Menu, X } from 'lucide-react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Hotel, Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 
 const NAV_LINKS = [
   { to: '/', label: 'Home', end: true },
@@ -11,6 +13,16 @@ const NAV_LINKS = [
 
 const PublicLayout = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { session, isAuthenticated, logout } = useAuth('user');
+  const toast = useToast();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
+    toast.info('Logged out.');
+    navigate('/');
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -45,18 +57,40 @@ const PublicLayout = () => {
             >
               List your property
             </Link>
-            <Link
-              to="/user/login"
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-brand-500 hover:text-brand-600"
-            >
-              Sign in
-            </Link>
-            <Link
-              to="/user/register"
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 hover:shadow"
-            >
-              Sign up
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <span className="text-sm text-gray-600">Hi, {session?.account?.name?.split(' ')[0]}</span>
+                <Link
+                  to="/user/dashboard"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-brand-500 hover:text-brand-600"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 hover:shadow"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/user/login"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-brand-500 hover:text-brand-600"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/user/register"
+                  className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 hover:shadow"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
 
           <button
@@ -91,20 +125,41 @@ const PublicLayout = () => {
               >
                 List your property
               </Link>
-              <Link
-                to="/user/login"
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-brand-600"
-              >
-                Sign in
-              </Link>
-              <Link
-                to="/user/register"
-                onClick={() => setMenuOpen(false)}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-center text-sm font-medium text-white"
-              >
-                Sign up
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/user/dashboard"
+                    onClick={() => setMenuOpen(false)}
+                    className="text-sm font-medium text-brand-600"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="rounded-lg bg-brand-600 px-4 py-2 text-center text-sm font-medium text-white"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/user/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="text-sm font-medium text-brand-600"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    to="/user/register"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg bg-brand-600 px-4 py-2 text-center text-sm font-medium text-white"
+                  >
+                    Sign up
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         )}
