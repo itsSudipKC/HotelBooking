@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Users } from 'lucide-react';
+import { Heart, MapPin, Users } from 'lucide-react';
 import ImageGallery from '../../components/ImageGallery';
 import StarRating from '../../components/StarRating';
 import ReviewCard from '../../components/ReviewCard';
@@ -11,18 +11,20 @@ import Button from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { getHotelById, getSimilarHotels, listHotelReviews } from '../../services/hotelService';
+import { getWishlistStatus, toggleWishlist } from '../../services/wishlistService';
 
 const HotelDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { isAuthenticated } = useAuth('user');
+  const { session, isAuthenticated } = useAuth('user');
 
   const [data, setData] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [similar, setSimilar] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -43,6 +45,31 @@ const HotelDetailsPage = () => {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setWishlisted(false);
+      return;
+    }
+    getWishlistStatus(session.accessToken, id)
+      .then((res) => setWishlisted(res.data.wishlisted))
+      .catch(() => {});
+  }, [isAuthenticated, session?.accessToken, id]);
+
+  const handleToggleWishlist = async () => {
+    if (!isAuthenticated) {
+      toast.info('Please sign in or create an account to save hotels.');
+      navigate('/user/login', { state: { from: `/hotels/${id}` } });
+      return;
+    }
+    try {
+      const res = await toggleWishlist(session.accessToken, id);
+      setWishlisted(res.data.wishlisted);
+      toast.info(res.message);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Something went wrong.');
+    }
+  };
 
   const handleBookNow = (roomId) => {
     const bookingUrl = `/user/bookings/new?hotelId=${id}&roomId=${roomId}`;
@@ -75,16 +102,27 @@ const HotelDetailsPage = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">{hotel.name}</h1>
-        <div className="mt-2 flex flex-wrap items-center gap-4">
-          <StarRating rating={hotel.avgRating || 0} reviewCount={hotel.reviewCount} />
-          <p className="flex items-center gap-1 text-sm text-gray-500">
-            <MapPin className="h-4 w-4" />
-            {hotel.address?.street ? `${hotel.address.street}, ` : ''}
-            {hotel.address?.city}, {hotel.address?.country}
-          </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">{hotel.name}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-4">
+            <StarRating rating={hotel.avgRating || 0} reviewCount={hotel.reviewCount} />
+            <p className="flex items-center gap-1 text-sm text-gray-500">
+              <MapPin className="h-4 w-4" />
+              {hotel.address?.street ? `${hotel.address.street}, ` : ''}
+              {hotel.address?.city}, {hotel.address?.country}
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={handleToggleWishlist}
+          className="flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:border-brand-500"
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+        >
+          <Heart className={`h-4 w-4 ${wishlisted ? 'fill-brand-600 text-brand-600' : 'text-gray-400'}`} />
+          {wishlisted ? 'Saved' : 'Save'}
+        </button>
       </div>
 
       <div className="mt-6">

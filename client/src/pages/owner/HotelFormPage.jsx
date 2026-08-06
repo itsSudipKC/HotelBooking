@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Plus, X } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import TextField from '../../components/TextField';
 import Button from '../../components/Button';
 import Spinner from '../../components/Spinner';
+import ImageDropzone from '../../components/ImageDropzone';
 import { useOwnerSession } from '../../hooks/useOwnerSession';
 import { getErrorMessage, getFieldErrors } from '../../utils/getErrorMessage';
 import * as ownerHotelService from '../../services/ownerHotelService';
@@ -22,7 +22,7 @@ const EMPTY_FORM = {
   lat: '',
   lng: '',
   amenities: [],
-  imageUrls: [''],
+  images: [],
 };
 
 const HotelFormPage = () => {
@@ -53,7 +53,7 @@ const HotelFormPage = () => {
           lat: h.location?.lat ?? '',
           lng: h.location?.lng ?? '',
           amenities: h.amenities || [],
-          imageUrls: h.images?.length ? h.images.map((img) => img.url) : [''],
+          images: h.images || [],
         });
         setWasReviewed(h.status === 'approved' || h.status === 'rejected');
       })
@@ -73,20 +73,16 @@ const HotelFormPage = () => {
     }));
   };
 
-  const setImageUrl = (index, value) => {
-    setForm((prev) => ({ ...prev, imageUrls: prev.imageUrls.map((u, i) => (i === index ? value : u)) }));
-  };
-
-  const addImageField = () => setForm((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ''] }));
-  const removeImageField = (index) =>
-    setForm((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== index) }));
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setFieldErrors({});
 
-    const payload = { ...form, starRating: Number(form.starRating) };
+    const payload = {
+      ...form,
+      starRating: Number(form.starRating),
+      imageUrls: form.images.map((img) => img.url),
+    };
 
     try {
       if (isEdit) {
@@ -200,33 +196,13 @@ const HotelFormPage = () => {
           </section>
 
           <section>
-            <h2 className="text-sm font-semibold text-gray-900">Images</h2>
-            <p className="mt-1 text-xs text-gray-400">Paste image URLs (Cloudinary upload lands in a later update).</p>
-            <div className="mt-3 flex flex-col gap-2">
-              {form.imageUrls.map((url, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={url}
-                    onChange={(e) => setImageUrl(index, e.target.value)}
-                    placeholder="https://..."
-                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                  />
-                  {form.imageUrls.length > 1 && (
-                    <button type="button" onClick={() => removeImageField(index)} className="p-2 text-gray-400 hover:text-red-600">
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addImageField}
-                className="flex w-fit items-center gap-1.5 text-sm font-medium text-brand-600 hover:underline"
-              >
-                <Plus className="h-4 w-4" /> Add another image
-              </button>
-            </div>
+            <ImageDropzone
+              accessToken={accessToken}
+              value={form.images}
+              onChange={(images) => setForm((prev) => ({ ...prev, images }))}
+              multiple
+              label="Hotel images"
+            />
           </section>
 
           <Button type="submit" loading={submitting} className="self-start">

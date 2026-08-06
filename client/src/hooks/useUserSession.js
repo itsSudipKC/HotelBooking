@@ -4,7 +4,7 @@ import { useToast } from './useToast';
 
 // Same shape as useOwnerSession/useAdminSession, for the /user/bookings* pages.
 export const useUserSession = () => {
-  const { session, logout } = useAuth('user');
+  const { session, logout, updateAccount } = useAuth('user');
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -14,5 +14,5 @@ export const useUserSession = () => {
     navigate('/user/login');
   };
 
-  return { account: session?.account, accessToken: session?.accessToken, toast, handleLogout };
+  return { account: session?.account, accessToken: session?.accessToken, toast, handleLogout, updateAccount };
 };

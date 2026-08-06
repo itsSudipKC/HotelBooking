@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Plus, X } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import TextField from '../../components/TextField';
 import Button from '../../components/Button';
+import ImageDropzone from '../../components/ImageDropzone';
 import { useOwnerSession } from '../../hooks/useOwnerSession';
 import { getErrorMessage, getFieldErrors } from '../../utils/getErrorMessage';
 import * as ownerRoomService from '../../services/ownerRoomService';
 
 const AMENITIES = ['AC', 'TV', 'WiFi', 'Balcony', 'Mini Bar', 'Room Service'];
 
-const emptyForm = () => ({ type: '', price: '', capacity: '2', totalRooms: '1', amenities: [], imageUrls: [''] });
+const emptyForm = () => ({ type: '', price: '', capacity: '2', totalRooms: '1', amenities: [], images: [] });
 
 const RoomFormPage = () => {
   const { hotelId, id } = useParams();
@@ -30,7 +30,7 @@ const RoomFormPage = () => {
           capacity: String(editingRoom.capacity),
           totalRooms: String(editingRoom.totalRooms),
           amenities: editingRoom.amenities || [],
-          imageUrls: editingRoom.images?.length ? editingRoom.images.map((img) => img.url) : [''],
+          images: editingRoom.images || [],
         }
       : emptyForm()
   );
@@ -62,12 +62,6 @@ const RoomFormPage = () => {
     }));
   };
 
-  const setImageUrl = (index, value) =>
-    setForm((prev) => ({ ...prev, imageUrls: prev.imageUrls.map((u, i) => (i === index ? value : u)) }));
-  const addImageField = () => setForm((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ''] }));
-  const removeImageField = (index) =>
-    setForm((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== index) }));
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -78,6 +72,7 @@ const RoomFormPage = () => {
       price: Number(form.price),
       capacity: Number(form.capacity),
       totalRooms: Number(form.totalRooms),
+      imageUrls: form.images.map((img) => img.url),
     };
 
     try {
@@ -169,30 +164,13 @@ const RoomFormPage = () => {
           </div>
         </div>
 
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900">Images</h2>
-          <div className="mt-3 flex flex-col gap-2">
-            {form.imageUrls.map((url, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={url}
-                  onChange={(e) => setImageUrl(index, e.target.value)}
-                  placeholder="https://..."
-                  className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                />
-                {form.imageUrls.length > 1 && (
-                  <button type="button" onClick={() => removeImageField(index)} className="p-2 text-gray-400 hover:text-red-600">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button type="button" onClick={addImageField} className="flex w-fit items-center gap-1.5 text-sm font-medium text-brand-600 hover:underline">
-              <Plus className="h-4 w-4" /> Add another image
-            </button>
-          </div>
-        </div>
+        <ImageDropzone
+          accessToken={accessToken}
+          value={form.images}
+          onChange={(images) => setForm((prev) => ({ ...prev, images }))}
+          multiple
+          label="Room images"
+        />
 
         <Button type="submit" loading={submitting} className="self-start">
           {isEdit ? 'Save changes' : 'Add room'}

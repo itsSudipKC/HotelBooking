@@ -4,7 +4,7 @@ A full-stack hotel booking platform built with MongoDB, Express.js, React.js, an
 
 Three roles are supported: **User** (guest), **Hotel Owner**, and **Admin**.
 
-> **Status: Pass 6 of an incremental build.** Pass 1 delivered the full project scaffold, every database model, and a complete manual authentication system for all three roles. Pass 2 added the public-facing guest site: hotel search/browse/details backed by real (aggregation-driven) read endpoints, plus Home, Hotels, Hotel Details, About, Contact, FAQ, Privacy Policy, and Terms pages. Pass 2.5 shipped a single-theme visual redesign (dark mode removed — see [Design](#design)) and real per-role dashboard home pages for User/Owner/Admin. Pass 4 built out the Admin Module's core management surface: Manage Users, Manage Hotel Owners, Manage Hotels (+ the approve/reject workflow), and Manage Bookings. Pass 5 closed the loop on hotel data: Owners can Add/Edit Hotel and Add/Edit/Delete Room themselves. Pass 6 makes bookings real: a guest requests a room from Hotel Details, the hotel Accepts or Rejects it from a new Booking Requests page, and both Admin's Manage Bookings and the guest's My Bookings reflect it live — see [Booking flow](#booking-flow) for why it's request/accept rather than pay-now. This closes out the roadmap's core CRUD; see [Feature status](#feature-status) for what's genuinely left (payments, PDF invoices, recommendations, AI chatbot, notifications).
+> **Status: Pass 7 of an incremental build.** Pass 1 delivered the full project scaffold, every database model, and a complete manual authentication system for all three roles. Pass 2 added the public-facing guest site: hotel search/browse/details backed by real (aggregation-driven) read endpoints, plus Home, Hotels, Hotel Details, About, Contact, FAQ, Privacy Policy, and Terms pages. Pass 2.5 shipped a single-theme visual redesign (dark mode removed — see [Design](#design)) and real per-role dashboard home pages for User/Owner/Admin. Pass 4 built out the Admin Module's core management surface: Manage Users, Manage Hotel Owners, Manage Hotels (+ the approve/reject workflow), and Manage Bookings. Pass 5 closed the loop on hotel data: Owners can Add/Edit Hotel and Add/Edit/Delete Room themselves. Pass 6 made bookings real: a guest requests a room from Hotel Details, the hotel Accepts or Rejects it from a Booking Requests page, and both Admin's Manage Bookings and the guest's My Bookings reflect it live — see [Booking flow](#booking-flow). Along the way, the public header was made auth-aware and login now returns you to whatever you were doing (e.g. booking) instead of always dropping you on the dashboard. Pass 7 completes the User side: a real Profile page (name/email/phone, password change, avatar) and Wishlist, plus **local disk image upload** (drag-and-drop, no Cloudinary — see [Image uploads](#image-uploads)) replacing pasted URLs on the Owner's Add/Edit Hotel and Room forms. This closes out the roadmap's core CRUD; see [Feature status](#feature-status) for what's genuinely left (payments, PDF invoices, recommendations, AI chatbot, notifications).
 
 ## Tech stack
 
@@ -14,8 +14,8 @@ Three roles are supported: **User** (guest), **Hotel Owner**, and **Admin**.
 | Backend | Node.js, Express.js (ESM) |
 | Database | MongoDB, Mongoose |
 | Auth | JWT + bcrypt, implemented manually (no auth libraries) |
-| Image storage | Cloudinary (wired, needs credentials) |
-| Email | Nodemailer (wired, needs SMTP credentials) |
+| Image storage | Local disk via Multer, served from `/uploads` (see [Image uploads](#image-uploads)) — Cloudinary config still exists but is unused/no credentials |
+| Email | Nodemailer (configured, needs valid SMTP credentials) |
 | Payments | eSewa, Khalti (models/env ready; integration is a later module) |
 | Other | Helmet, CORS, express-rate-limit, express-validator, Multer, PDFKit, Google Maps API (later module) |
 
@@ -43,33 +43,42 @@ Room.bookedDates gains an entry
 
 **Double-booking prevention** is real, not a stub: a room has `totalRooms` units of that type. A new request is only blocked if already-`confirmed` bookings overlapping those dates have reached `totalRooms` — multiple *pending* requests for the same dates are allowed (that's what gives the owner something to choose between). The same count is re-checked at Accept time in case the room filled up while a request was waiting. A `Payment`/gateway step can be inserted before "Accept" in a later pass without restructuring any of this.
 
+## Image uploads
+
+Hotel images, room images, and the user avatar are all uploaded from disk — dragged, dropped, or picked via a file browser — and stored locally on the server, **not Cloudinary**. `CLOUDINARY_*` credentials are still empty, and this sidesteps needing them at all for the core flows:
+
+- `POST /api/uploads/image` (any authenticated role) takes one `multipart/form-data` image, validates its mimetype (JPEG/PNG/WEBP/GIF only) and size (5MB max) via `multer`, saves it under `server/uploads/` with a random filename (never the client's own filename), and returns `{ url: '/uploads/<file>', publicId: '<file>' }` — the exact `{url, publicId}` shape `Hotel.images`/`Room.images`/`User.avatar` already expected from the original Cloudinary-shaped schema, so nothing downstream needed to change.
+- `app.js` serves `server/uploads/` at `/uploads`; `client/vite.config.js` proxies `/uploads` the same way it already proxies `/api`, so images load correctly in dev without any absolute-URL configuration.
+- `client/src/components/ImageDropzone.jsx` is the reusable drag-and-drop widget (drag-over highlight, click-to-browse fallback, thumbnail previews with remove) used by Add/Edit Hotel, Add/Edit Room, and the Profile page's avatar (single-image mode shows a circular preview instead of a thumbnail grid). It uploads immediately on drop and hands the parent form back `{url, publicId}` pairs — the hotel/room create/update endpoints themselves are unchanged, they still just receive an array of URL strings.
+- Swapping this for real Cloudinary upload later only touches `upload.middleware.js` (swap `multer.diskStorage` for a Cloudinary storage engine) — every form and the `{url, publicId}` contract stay the same.
+
 ## Folder structure
 
 ```
 hotelbooking/
 ├── client/                    # React + Vite frontend
 │   └── src/
-│       ├── components/        # Reusable UI (Button, TextField, ProtectedRoute, Spinner, HotelCard, StarRating, Pagination, SearchBar, FilterSidebar, ReviewCard, Accordion, Testimonials, WhyChooseUs, ImageGallery, MapEmbed, dashboard/StatCard, dashboard/Badge...)
+│       ├── components/        # Reusable UI (Button, TextField, ProtectedRoute, Spinner, HotelCard, StarRating, Pagination, SearchBar, FilterSidebar, ReviewCard, Accordion, Testimonials, WhyChooseUs, ImageGallery, MapEmbed, ImageDropzone, dashboard/StatCard, dashboard/Badge...)
 │       ├── pages/              # Route-level pages (public/, auth/, dashboard/, admin/, owner/, user/, NotFoundPage)
 │       ├── layouts/             # AuthLayout, PublicLayout (guest site header/nav/footer), DashboardLayout (per-role dashboard chrome)
-│       ├── context/              # AuthContext (per-role sessions), ToastContext
+│       ├── context/              # AuthContext (per-role sessions + updateAccountAs for live profile edits), ToastContext
 │       ├── hooks/                  # useAuth(role), useToast, useAdminSession, useOwnerSession, useUserSession
-│       ├── services/                # apiClient (axios), authService, hotelService, contactService, ownerDashboardService, adminDashboardService, adminUser/adminOwner/adminHotel/adminBookingService, ownerHotelService, ownerRoomService, bookingService, ownerBookingService
+│       ├── services/                # apiClient (axios), authService, hotelService, contactService, ownerDashboardService, adminDashboardService, adminUser/adminOwner/adminHotel/adminBookingService, ownerHotelService, ownerRoomService, bookingService, ownerBookingService, uploadService, userProfileService, wishlistService
 │       ├── algorithms/                # (reserved for future client-side algorithm helpers)
 │       ├── utils/                       # getErrorMessage
 │       └── assets/
 ├── server/                     # Express backend
-│   ├── config/                  # db.js, cloudinary.js, env.js
-│   ├── controllers/              # auth.controller.js (User/Owner factory), admin.controller.js, hotel.controller.js, review.controller.js, contact.controller.js, ownerDashboard.controller.js, adminDashboard.controller.js, adminUser/adminOwner/adminHotel/adminBooking.controller.js, ownerHotel.controller.js, ownerRoom.controller.js, booking.controller.js, ownerBooking.controller.js
-│   ├── middleware/                 # auth (JWT verify + RBAC), error handler, rate limiter, validate
+│   ├── config/                  # db.js, cloudinary.js (unused — see Image uploads), env.js
+│   ├── controllers/              # auth.controller.js (User/Owner factory), admin.controller.js, hotel.controller.js, review.controller.js, contact.controller.js, ownerDashboard.controller.js, adminDashboard.controller.js, adminUser/adminOwner/adminHotel/adminBooking.controller.js, ownerHotel.controller.js, ownerRoom.controller.js, booking.controller.js, ownerBooking.controller.js, upload.controller.js, userProfile.controller.js, wishlist.controller.js
+│   ├── middleware/                 # auth (JWT verify + RBAC), error handler, rate limiter, validate, upload (multer disk storage)
 │   ├── models/                      # All 14 Mongoose models (see below)
-│   ├── routes/                       # userAuth / ownerAuth / adminAuth (under /api/auth), hotel.routes.js (/api/hotels), contact.routes.js (/api/contact), ownerDashboard/ownerHotel/ownerRoom/ownerBooking.routes.js (under /api/owner), adminDashboard/adminUser/adminOwner/adminHotel/adminBooking.routes.js (under /api/admin), booking.routes.js (/api/bookings)
+│   ├── routes/                       # userAuth / ownerAuth / adminAuth (under /api/auth), hotel.routes.js (/api/hotels), contact.routes.js (/api/contact), ownerDashboard/ownerHotel/ownerRoom/ownerBooking.routes.js (under /api/owner), adminDashboard/adminUser/adminOwner/adminHotel/adminBooking.routes.js (under /api/admin), booking.routes.js (/api/bookings), upload.routes.js (/api/uploads), userProfile.routes.js (/api/users), wishlist.routes.js (/api/wishlist)
 │   ├── services/                       # token.service.js, email.service.js
 │   ├── algorithms/                      # (reserved: recommendation/, search/ for later modules)
 │   ├── validators/                       # express-validator chains
 │   ├── utils/                              # ApiError, ApiResponse, asyncHandler, crypto (secure tokens)
 │   ├── emailTemplates/                      # HTML email templates
-│   ├── uploads/                               # Local temp dir for Multer before Cloudinary upload
+│   ├── uploads/                               # Local image storage (see Image uploads) — served at /uploads, gitignored
 │   ├── scripts/                                # seedAdmin.js, seedPublicData.js
 │   ├── app.js, server.js
 │   └── .env.example
@@ -249,7 +258,7 @@ Owner-only (`verifyJWT`, `authorizeRoles('owner')` on the whole router). Every h
 | DELETE | `/api/owner/rooms/:id` | Delete a room |
 | PATCH | `/api/owner/rooms/:id/toggle-active` | Flip `Room.isActive` (stands in for a full availability calendar — see [Feature status](#feature-status)) |
 
-Images on both are pasted URLs, not uploaded files — `CLOUDINARY_*` credentials are still empty, so there's nothing to wire a real upload to yet (see [Environment variables](#environment-variables)). The stored shape (`{url, publicId}`) is unchanged, so swapping this for real Cloudinary upload later only touches the frontend form.
+Images on both are real drag-and-drop uploads to local disk (see [Image uploads](#image-uploads)) — the `{url, publicId}` shape means these two endpoints didn't need any changes when file upload replaced pasted URLs.
 
 ## Booking endpoints
 
@@ -267,6 +276,18 @@ See [Booking flow](#booking-flow) for the request/Accept/Reject design and the `
 | PATCH | `/api/owner/bookings/:id/reject` | Owner | Requires `{ reason }`, sets `status: 'rejected'`, emails the guest |
 
 Admin's existing `/api/admin/bookings` endpoints (Pass 4) needed no changes — they already read the `Booking` collection generically regardless of status.
+
+## Upload, profile, and wishlist endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/api/uploads/image` | Any authenticated role | `multipart/form-data` field `image` → `{ url, publicId }`. See [Image uploads](#image-uploads). |
+| PATCH | `/api/users/me` | User | Update `name`/`phone`/`email` — an email change resets `isEmailVerified: false` and re-sends the real verification email (same template/token flow as registration) |
+| PATCH | `/api/users/me/password` | User | Requires `currentPassword`; bumps `refreshTokenVersion` (same as the existing reset-password flow), so the frontend logs the user out right after a successful change |
+| PATCH | `/api/users/me/avatar` | User | Body is an already-uploaded `{ url, publicId }` |
+| GET | `/api/wishlist/my` | User | The user's saved hotels (only ones still `approved`) |
+| GET | `/api/wishlist/status/:hotelId` | User | `{ wishlisted }` — used to set the heart icon's initial state on Hotel Details |
+| PATCH | `/api/wishlist/toggle/:hotelId` | User | Adds or removes the hotel (`Wishlist` is one document per user with a `hotels: ObjectId[]` array, not one row per saved hotel) |
 
 ### Admin account creation
 
@@ -311,16 +332,16 @@ Legend: ✅ done · ⏳ scaffolded (model/route exists, not wired) · ⬜ not st
 | Manual auth (User/Owner/Admin) | ✅ |
 | Public Pages (Home, Hotels, Hotel Details, About, Contact, FAQ, Privacy, Terms, 404) | ✅ |
 | Hotel search, filters, sorting, pagination (public read side) | ✅ |
-| Hotel & Room management + Admin approval workflow | ✅ (Owner Add/Edit/Delete Hotel + Room, resubmission-on-edit; Admin approve/reject/delete — full loop. Images are pasted URLs, not Cloudinary upload, until credentials exist) |
+| Hotel & Room management + Admin approval workflow | ✅ (Owner Add/Edit/Delete Hotel + Room, resubmission-on-edit; Admin approve/reject/delete — full loop. Images are real drag-and-drop uploads to local disk — see [Image uploads](#image-uploads)) |
 | Search history / recently viewed | ⬜ |
 | Booking workflow + double-booking prevention | ✅ (request/Accept/Reject flow — see [Booking flow](#booking-flow); `totalRooms`-aware overlap guard at both request and accept time is the "double-booking prevention," made real instead of a calendar UI) |
 | Payments (eSewa/Khalti) | ⬜ (bookings are confirmed by the owner directly — "pay at property" style — until sandbox credentials exist; `Booking.payment` is ready for it) |
 | PDF invoices | ⬜ (`Booking.invoiceNumber` is generated and shown, but nothing renders a PDF yet) |
 | Google Maps integration | ⏳ (hotel details renders a live embed if `VITE_GOOGLE_MAPS_API_KEY` is set, else a placeholder) |
-| Reviews & ratings (public display), wishlist | ⏳ (reading reviews works; writing a review now has real bookings to gate on, but the "write a review" UI itself isn't built yet) |
+| Reviews & ratings (public display), wishlist | ⏳ (**wishlist: done** — save/unsave from Hotel Details, `/user/wishlist` list. Reviews: reading works, writing now has real bookings to gate on, but the "write a review" UI itself isn't built yet) |
 | Recommendation engine | ⬜ (public "Similar Hotels" uses simple city/amenity matching, not the full engine) |
 | AI chatbot (rule-based fallback first) | ⬜ |
-| Admin/Owner/User dashboards | ✅ (**Admin** — dashboard + Manage Users/Owners/Hotels/Bookings. **Owner** — dashboard + My Hotels + Add/Edit Hotel/Room + Booking Requests. **User** — dashboard + My Bookings + booking creation/cancellation) |
+| Admin/Owner/User dashboards | ✅ (**Admin** — dashboard + Manage Users/Owners/Hotels/Bookings. **Owner** — dashboard + My Hotels + Add/Edit Hotel/Room + Booking Requests. **User** — dashboard + My Bookings + Wishlist + Profile (name/email/phone/avatar/password)) |
 | UI/UX polish (dark mode, skeletons, empty states, lazy loading) | ⏳ (single light theme by design — dark mode intentionally removed, not scaffolded; loading/empty states in place on public + dashboard pages; lazy loading still pending) |
 
 Each remaining item will be built and explained as its own module, with your approval before moving to the next — per the project's own development rules.

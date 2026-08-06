@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import mongoSanitize from 'mongo-sanitize';
 
+import { uploadsDir } from './middleware/upload.middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import hotelRoutes from './routes/hotel.routes.js';
 import contactRoutes from './routes/contact.routes.js';
@@ -17,6 +18,9 @@ import ownerHotelRoutes from './routes/ownerHotel.routes.js';
 import ownerRoomRoutes from './routes/ownerRoom.routes.js';
 import bookingRoutes from './routes/booking.routes.js';
 import ownerBookingRoutes from './routes/ownerBooking.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
+import userProfileRoutes from './routes/userProfile.routes.js';
+import wishlistRoutes from './routes/wishlist.routes.js';
 import { apiRateLimiter } from './middleware/rateLimiter.middleware.js';
 import { notFoundHandler, errorHandler } from './middleware/error.middleware.js';
 
@@ -32,6 +36,7 @@ app.use(
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
+app.use('/uploads', express.static(uploadsDir));
 
 // Strips any keys starting with "$" or containing "." from user input to
 // block MongoDB operator injection (e.g. { "email": { "$ne": null } }).
@@ -60,6 +65,9 @@ app.use('/api/admin/users', adminUserRoutes);
 app.use('/api/admin/owners', adminOwnerRoutes);
 app.use('/api/admin/hotels', adminHotelRoutes);
 app.use('/api/admin/bookings', adminBookingRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/users', userProfileRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

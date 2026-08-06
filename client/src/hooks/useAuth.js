@@ -9,7 +9,7 @@ export const useAuth = (role) => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
 
-  const { sessions, loading, loginAs, logoutAs, refreshAs } = ctx;
+  const { sessions, loading, loginAs, logoutAs, refreshAs, updateAccountAs } = ctx;
 
   return {
     session: sessions[role],
@@ -18,5 +18,6 @@ export const useAuth = (role) => {
     login: (credentials) => loginAs(role, credentials),
     logout: () => logoutAs(role),
     refresh: () => refreshAs(role),
+    updateAccount: (accountPatch) => updateAccountAs(role, accountPatch),
   };
 };

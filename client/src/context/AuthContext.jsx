@@ -73,9 +73,18 @@ export const AuthProvider = ({ children }) => {
     []
   );
 
+  // Patches the in-memory account for a role after a profile/avatar edit, so
+  // the header/dashboard reflect it immediately without a full page reload.
+  const updateAccountAs = useCallback((role, accountPatch) => {
+    setSessions((current) => ({
+      ...current,
+      [role]: current[role] ? { ...current[role], account: { ...current[role].account, ...accountPatch } } : current[role],
+    }));
+  }, []);
+
   const value = useMemo(
-    () => ({ sessions, loading, loginAs, logoutAs, refreshAs }),
-    [sessions, loading, loginAs, logoutAs, refreshAs]
+    () => ({ sessions, loading, loginAs, logoutAs, refreshAs, updateAccountAs }),
+    [sessions, loading, loginAs, logoutAs, refreshAs, updateAccountAs]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

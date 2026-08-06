@@ -10,8 +10,8 @@ import { getFeaturedHotels } from '../../services/hotelService';
 const QUICK_LINKS = [
   { icon: Search, label: 'Browse Hotels', to: '/hotels', active: true },
   { icon: CalendarCheck, label: 'My Bookings', to: '/user/bookings', active: true },
-  { icon: Heart, label: 'Wishlist', active: false },
-  { icon: UserCog, label: 'Profile Settings', active: false },
+  { icon: Heart, label: 'Wishlist', to: '/user/wishlist', active: true },
+  { icon: UserCog, label: 'Profile Settings', to: '/user/profile', active: true },
 ];
 
 const UserDashboardPage = () => {
@@ -38,9 +38,13 @@ const UserDashboardPage = () => {
         <div className="flex flex-col gap-6">
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-lg font-semibold text-brand-700">
-                {account?.name?.[0]?.toUpperCase() || '?'}
-              </div>
+              {account?.avatar?.url ? (
+                <img src={account.avatar.url} alt="" className="h-12 w-12 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-lg font-semibold text-brand-700">
+                  {account?.name?.[0]?.toUpperCase() || '?'}
+                </div>
+              )}
               <div>
                 <p className="font-medium text-gray-900">{account?.name}</p>
                 <p className="text-sm text-gray-500">{account?.email}</p>
