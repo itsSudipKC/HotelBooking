@@ -67,6 +67,15 @@ const hotelSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    faqs: {
+      type: [
+        {
+          question: { type: String, required: true, trim: true },
+          answer: { type: String, required: true, trim: true },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

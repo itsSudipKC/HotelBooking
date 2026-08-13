@@ -5,7 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import HotelCard from '../../components/HotelCard';
 import Spinner from '../../components/Spinner';
 import { useUserSession } from '../../hooks/useUserSession';
-import { getFeaturedHotels } from '../../services/hotelService';
+import { getRecommendedHotels } from '../../services/hotelService';
 
 const QUICK_LINKS = [
   { icon: Search, label: 'Browse Hotels', to: '/hotels', active: true },
@@ -15,19 +15,20 @@ const QUICK_LINKS = [
 ];
 
 const UserDashboardPage = () => {
-  const { account, handleLogout } = useUserSession();
+  const { account, accessToken, handleLogout } = useUserSession();
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!accessToken) return undefined;
     let active = true;
-    getFeaturedHotels(4)
+    getRecommendedHotels(accessToken, 4)
       .then((res) => active && setHotels(res.data.hotels))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, []);
+  }, [accessToken]);
 
   return (
     <DashboardLayout role="user" accountName={account?.name} onLogout={handleLogout}>

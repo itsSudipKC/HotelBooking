@@ -1,4 +1,4 @@
-import { param, query } from 'express-validator';
+import { body, param, query } from 'express-validator';
 
 export const listHotelsValidator = [
   query('page').optional().isInt({ min: 1 }).withMessage('page must be a positive integer'),
@@ -13,3 +13,7 @@ export const listHotelsValidator = [
 ];
 
 export const hotelIdParamValidator = [param('id').notEmpty().withMessage('Hotel id is required')];
+
+export const chatQuestionValidator = [
+  body('question').trim().notEmpty().withMessage('A question is required').isLength({ max: 500 }).withMessage('Question is too long'),
+];

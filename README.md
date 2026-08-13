@@ -4,7 +4,7 @@ A full-stack hotel booking platform built with MongoDB, Express.js, React.js, an
 
 Three roles are supported: **User** (guest), **Hotel Owner**, and **Admin**.
 
-> **Status: Pass 7 of an incremental build.** Pass 1 delivered the full project scaffold, every database model, and a complete manual authentication system for all three roles. Pass 2 added the public-facing guest site: hotel search/browse/details backed by real (aggregation-driven) read endpoints, plus Home, Hotels, Hotel Details, About, Contact, FAQ, Privacy Policy, and Terms pages. Pass 2.5 shipped a single-theme visual redesign (dark mode removed — see [Design](#design)) and real per-role dashboard home pages for User/Owner/Admin. Pass 4 built out the Admin Module's core management surface: Manage Users, Manage Hotel Owners, Manage Hotels (+ the approve/reject workflow), and Manage Bookings. Pass 5 closed the loop on hotel data: Owners can Add/Edit Hotel and Add/Edit/Delete Room themselves. Pass 6 made bookings real: a guest requests a room from Hotel Details, the hotel Accepts or Rejects it from a Booking Requests page, and both Admin's Manage Bookings and the guest's My Bookings reflect it live — see [Booking flow](#booking-flow). Along the way, the public header was made auth-aware and login now returns you to whatever you were doing (e.g. booking) instead of always dropping you on the dashboard. Pass 7 completes the User side: a real Profile page (name/email/phone, password change, avatar) and Wishlist, plus **local disk image upload** (drag-and-drop, no Cloudinary — see [Image uploads](#image-uploads)) replacing pasted URLs on the Owner's Add/Edit Hotel and Room forms. This closes out the roadmap's core CRUD; see [Feature status](#feature-status) for what's genuinely left (payments, PDF invoices, recommendations, AI chatbot, notifications).
+> **Status: Pass 9 of an incremental build.** Pass 1 delivered the full project scaffold, every database model, and a complete manual authentication system for all three roles. Pass 2 added the public-facing guest site: hotel search/browse/details backed by real (aggregation-driven) read endpoints, plus Home, Hotels, Hotel Details, About, Contact, FAQ, Privacy Policy, and Terms pages. Pass 2.5 shipped a single-theme visual redesign (dark mode removed — see [Design](#design)) and real per-role dashboard home pages for User/Owner/Admin. Pass 4 built out the Admin Module's core management surface: Manage Users, Manage Hotel Owners, Manage Hotels (+ the approve/reject workflow), and Manage Bookings. Pass 5 closed the loop on hotel data: Owners can Add/Edit Hotel and Add/Edit/Delete Room themselves. Pass 6 made bookings real: a guest requests a room from Hotel Details, the hotel Accepts or Rejects it from a Booking Requests page, and both Admin's Manage Bookings and the guest's My Bookings reflect it live — see [Booking flow](#booking-flow). Along the way, the public header was made auth-aware and login now returns you to whatever you were doing (e.g. booking) instead of always dropping you on the dashboard. Pass 7 completes the User side: a real Profile page (name/email/phone, password change, avatar) and Wishlist, plus **local disk image upload** (drag-and-drop, no Cloudinary — see [Image uploads](#image-uploads)) replacing pasted URLs on the Owner's Add/Edit Hotel and Room forms. Pass 8 adds **eSewa + Khalti payment integration** (see [Payments](#payments)) — a pay-after-accept step with server-to-server verification, built to work once real sandbox credentials are added and gracefully no-op-ing until then. Pass 9 adds **genuine reviews gated on completed bookings**, a **content-based recommendation engine with a weighted match score** driven by those reviews (see [Reviews, ratings, and recommendations](#reviews-ratings-and-recommendations)), and a **hotel-specific "Chat With Us" chatbot** answering from each hotel's own FAQ data with zero hallucination risk by construction (see [Hotel chatbot](#hotel-chatbot)). See [Feature status](#feature-status) for what's genuinely left (PDF invoices, AI-generated content, notifications).
 
 ## Tech stack
 
@@ -16,7 +16,7 @@ Three roles are supported: **User** (guest), **Hotel Owner**, and **Admin**.
 | Auth | JWT + bcrypt, implemented manually (no auth libraries) |
 | Image storage | Local disk via Multer, served from `/uploads` (see [Image uploads](#image-uploads)) — Cloudinary config still exists but is unused/no credentials |
 | Email | Nodemailer (configured, needs valid SMTP credentials) |
-| Payments | eSewa, Khalti (models/env ready; integration is a later module) |
+| Payments | eSewa (ePay v2) + Khalti (ePayment v2) — integrated, see [Payments](#payments) |
 | Other | Helmet, CORS, express-rate-limit, express-validator, Multer, PDFKit, Google Maps API (later module) |
 
 ## Design
@@ -41,7 +41,68 @@ Room.bookedDates gains an entry
 (the double-booking guard below now sees it)
 ```
 
-**Double-booking prevention** is real, not a stub: a room has `totalRooms` units of that type. A new request is only blocked if already-`confirmed` bookings overlapping those dates have reached `totalRooms` — multiple *pending* requests for the same dates are allowed (that's what gives the owner something to choose between). The same count is re-checked at Accept time in case the room filled up while a request was waiting. A `Payment`/gateway step can be inserted before "Accept" in a later pass without restructuring any of this.
+**Double-booking prevention** is real, not a stub: a room has `totalRooms` units of that type. A new request is only blocked if already-`confirmed` bookings overlapping those dates have reached `totalRooms` — multiple *pending* requests for the same dates are allowed (that's what gives the owner something to choose between). The same count is re-checked at Accept time in case the room filled up while a request was waiting. A payment step now follows Accept — see [Payments](#payments) below.
+
+## Payments
+
+`ESEWA_MERCHANT_CODE`/`ESEWA_SECRET`/`KHALTI_SECRET_KEY` are still empty in this environment (the user will supply real sandbox/live credentials later), so this integration is built to work the moment those land, and to fail cleanly — not crash or fake success — while they're empty.
+
+**Timing: pay *after* Accept, not at request time.** Multiple guests can have `pending` requests for overlapping dates (the owner picks one to Accept) — charging at request time would mean collecting money from guests who might get rejected. So the flow is:
+
+```
+Booking confirmed (unchanged Accept step)
+        ↓
+Guest sees "Pay Now" on My Bookings → My Booking Details
+        ↓
+Guest picks eSewa or Khalti on /user/bookings/:id/pay
+        ↓
+Redirected to the gateway to complete payment
+        ↓
+Gateway redirects back to our server (GET /api/payments/{esewa,khalti}/callback)
+        ↓
+Server re-verifies the transaction with the gateway itself — never
+trusts the redirect's query params alone — then updates Payment + Booking
+        ↓
+Browser lands on /user/payments/result, which re-fetches the real
+Payment status from our API (not the URL) before showing success/failure
+```
+
+No `Booking.status` change was needed — "confirmed but unpaid" vs "confirmed and paid" is just "does a `success` `Payment` document exist for this booking."
+
+- `server/services/esewa.service.js` — builds the signed form (HMAC-SHA256 of `total_amount,transaction_uuid,product_code`) the frontend auto-submits to eSewa's payment page, decodes the base64 `data` eSewa appends to the return URL, and re-verifies server-to-server against eSewa's own transaction-status endpoint.
+- `server/services/khalti.service.js` — calls Khalti's `epayment/initiate/` (returns `{pidx, payment_url}`) and `epayment/lookup/` (server-to-server re-verification by `pidx`).
+- `server/controllers/payment.controller.js` — `initiatePayment` (validates the booking is the caller's, `confirmed`, and not already paid, then returns eSewa's form fields or Khalti's `payment_url`), the two public `handle{Esewa,Khalti}Callback` endpoints (the gateway hits these directly with no bearer token — they're the only public routes in this file, and both independently re-verify before trusting anything), and `getPaymentForBooking`.
+- **Graceful degradation**: if the relevant secret is empty, `initiatePayment` returns a 503 with a clear "not configured yet" message instead of attempting a request the gateway would reject — same pattern as `sendEmail` skipping when SMTP isn't configured. Verified end-to-end: `Pay Now` → provider button → clean toast, no crash, no orphan `Payment` record left behind.
+- **Honesty note**: the exact eSewa v2 / Khalti v2 field names and endpoints are implemented from their publicly documented, stable API contracts (linked from `.env.example`) — there were no live sandbox credentials available to test an actual end-to-end gateway round-trip. Each gateway's request/response shape lives in exactly one file, so if a field has changed since, it's a one-file fix. **The live redirect flow (actually completing a payment on eSewa/Khalti's own pages) still needs to be smoke-tested once real sandbox keys are added.**
+
+## Reviews, ratings, and recommendations
+
+**Reviews are gated on a completed stay.** `Booking.status` has had `'completed'` in its enum since Pass 1, but nothing ever set it — there's no cron/scheduler in this app. `server/utils/bookingCompletion.js` makes it real:
+- `findEligibleBooking(userId, hotelId)` — a booking qualifies if it's already `'completed'`, **or** `'confirmed'` with a `checkOut` date in the past. This is the actual write-gate for `POST /api/reviews`, computed directly so it's correct even if the sweep below has never run for this user.
+- `sweepCompletedBookings(filter)` — lazily flips `'confirmed'` bookings past checkout to `'completed'`, called whenever `listMyBookings`/`getMyBookingById` run, so "My Bookings" visibly shows the real status without needing a background job.
+
+**Owners have zero authority over reviews** — there is no owner- or admin-facing route anywhere that creates, edits, or deletes a `Review`. `POST /api/reviews` is the only write path into that collection, gated `authorizeRoles('user')`, and it:
+1. Confirms an eligible completed booking exists for that user + hotel (403 otherwise).
+2. Blocks a second review for the same hotel (the existing `{user, hotel}` unique index, reused unchanged — 400 with a clear message).
+3. Recomputes `Hotel.avgRating`/`reviewCount` from the real `Review` collection afterward. These fields have existed since Pass 1 but were previously written only once, by the seed script — a real new review never used to move the displayed rating; this closes that gap.
+
+**Recommendations are content-based with a weighted match score** (`server/services/recommendation.service.js`, `GET /hotels/recommended`, user-only), computed on demand — the catalog is small enough that this needs no batch job or vector store, same philosophy as the existing `getSimilarHotels`. Five weighted components (rating 0.30, budget 0.20, amenities 0.20, location 0.15, room type 0.15):
+- **Rating** — Bayesian-damped average of `avgRating`/`reviewCount` (so genuine reviews are a real input, and one 5-star review can't outrank a hotel with 40 reviews at 4.6).
+- **Budget** — candidate's starting price vs. the user's average nightly rate from their own bookings (falls back to wishlisted hotels' prices).
+- **Amenities** — Jaccard overlap with amenities from hotels the user has booked, wishlisted, or rated ≥4.
+- **Location** — city/country match against the user's booking/wishlist history.
+- **Room type** — whether the hotel has a room type the user has booked before.
+
+**Cold start has no special-cased branch**: a component with no signal for a user (e.g. no bookings yet) is simply dropped and its weight redistributed across the rest. A brand-new user has signal only for "rating," so their ranking collapses exactly to Bayesian-rating order — verified directly: a freshly-registered user with no history returns hotels ordered purely by rating, matching hand-calculated Bayesian scores. Hotels the user already has a booking at are excluded from their own recommendations. The "Recommended Hotels" section on `UserDashboardPage.jsx` (which already existed, wired to generic featured hotels) now calls this endpoint instead — the only frontend change needed. `HotelCard` shows a "`NN`% match" badge when a `matchScore` is present.
+
+## Hotel chatbot
+
+The **"Chat With Us"** button on `HotelDetailsPage.jsx` opens a floating panel (`client/src/components/HotelChatWidget.jsx`) that answers questions about that specific hotel — retrieval only, **no LLM call anywhere in this feature**, so "must not invent an answer" holds by construction, not by prompting. `server/services/hotelChatbot.service.js` (`POST /hotels/:id/chat`, public) runs a small rule cascade per question:
+1. **Owner FAQ match** — each hotel has a `faqs: [{question, answer}]` array (new field on `Hotel.model.js`); the question is tokenized and matched against stored FAQ questions by word overlap. This is where check-in/out time, parking, cancellation policy, and other free-text info the owner enters lives.
+2. **Structured intents**, answered live from data that already exists elsewhere so it can never go stale: room types/prices/capacity from `Room`, the amenities list, and the address — an owner never has to re-type these into a FAQ.
+3. **Fallback** — `"Sorry, I don't have information about this question. For more information, please contact the hotel owner at: {phone}."`, with the owner's phone pulled server-side from `Owner.phone` (an existing, optional field that stays out of the public hotel payload — `PUBLIC_OWNER_FIELDS` is unchanged — and is resolved only inside this one controller action).
+
+Owners manage their hotel's FAQs from a new "Chatbot FAQs" card on `OwnerHotelDetailsPage.jsx` (`PATCH /api/owner/hotels/:id/faqs`) — deliberately **not** folded into the main Edit Hotel form/endpoint, because `updateHotel` unconditionally resets an approved hotel back to `'pending'` on any edit; FAQ text is chatbot-only informational content and shouldn't force a live listing back into admin-review limbo. Verified directly: saving new FAQs leaves an `approved` hotel's status untouched. Every seeded hotel ships with 5 realistic default FAQs (check-in/out, parking, Wi-Fi, cancellation) so the chatbot is demoable immediately after `npm run seed:public`.
 
 ## Image uploads
 
@@ -152,7 +213,7 @@ All variables live in `server/.env` (copy from `server/.env.example`). Everythin
 | `ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Only for `npm run seed:admin` | `ADMIN_EMAIL` is also where Contact page messages are sent — without it, contact emails are skipped (logged, not sent). |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | Optional | Without these, emails are skipped (logged, not sent) — registration/login still work. Gmail needs an "App Password", not your normal password. For local testing without a real inbox, [Ethereal](https://ethereal.email) works well. |
 | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Not yet used | Needed starting the Owner-facing Hotel/Room module (real image uploads). The public read side and `seed:public` use static placeholder image URLs instead. |
-| `ESEWA_MERCHANT_CODE` / `ESEWA_SECRET` / `KHALTI_SECRET_KEY` | Not yet used | Needed starting the Payment module. Get sandbox credentials from the [eSewa](https://developer.esewa.com.np) and [Khalti](https://docs.khalti.com) developer docs. |
+| `ESEWA_MERCHANT_CODE` / `ESEWA_SECRET` / `KHALTI_SECRET_KEY` | Optional | Payment integration is built (see [Payments](#payments)) but no-ops with a clean 503 until these are set. Get sandbox credentials from the [eSewa](https://developer.esewa.com.np) and [Khalti](https://docs.khalti.com) developer docs. |
 | `GOOGLE_MAPS_API_KEY` | Not yet used server-side | The hotel details map instead reads a client-side `VITE_GOOGLE_MAPS_API_KEY` (see `client/.env.example`) directly for the embed URL; without it, a static placeholder is shown. |
 
 ## Database models
@@ -164,8 +225,8 @@ All 14 models from the spec are implemented. Only the ones marked "used" have re
 | User, Owner, Admin | ✅ |
 | EmailVerificationToken, PasswordResetToken | ✅ |
 | Hotel, Room | ✅ (public read only — write/CRUD is the Owner Hotel/Room module) |
-| Review | ✅ (public read only — writing a review requires the booking module) |
-| Booking, Payment | Schema only |
+| Review | ✅ (write-gated on a completed booking — see [Reviews, ratings, and recommendations](#reviews-ratings-and-recommendations)) |
+| Booking, Payment | ✅ |
 | Wishlist | Schema only |
 | SearchHistory, RecentlyViewed | Schema only |
 | Notification | Schema only |
@@ -277,6 +338,28 @@ See [Booking flow](#booking-flow) for the request/Accept/Reject design and the `
 
 Admin's existing `/api/admin/bookings` endpoints (Pass 4) needed no changes — they already read the `Booking` collection generically regardless of status.
 
+## Payment endpoints
+
+See [Payments](#payments) for the pay-after-accept design and the graceful-degradation behavior.
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/api/payments/initiate` | User | Body `{ bookingId, method }`. Validates the booking is `confirmed`, belongs to the caller, and isn't already paid; 503 if the chosen gateway isn't configured. Returns eSewa's signed form fields or Khalti's `payment_url`. |
+| GET | `/api/payments/esewa/callback` | Public (gateway redirect) | Decodes eSewa's `data` param, re-verifies server-to-server, updates `Payment` + `Booking`, redirects to the frontend result page. |
+| GET | `/api/payments/khalti/callback` | Public (gateway redirect) | Looks up the `pidx` Khalti appends to the return URL, re-verifies server-to-server, updates `Payment` + `Booking`, redirects to the frontend result page. |
+| GET | `/api/payments/booking/:bookingId` | User | The latest `Payment` for one of the caller's bookings — used by the Pay Now page and the result page (never trusts the redirect URL alone). |
+
+## Review, recommendation, and chatbot endpoints
+
+See [Reviews, ratings, and recommendations](#reviews-ratings-and-recommendations) and [Hotel chatbot](#hotel-chatbot).
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/api/reviews` | User | Body `{ hotelId, rating, comment }`. 403 with no eligible completed booking, 400 if already reviewed; recomputes `Hotel.avgRating`/`reviewCount` on success. The only write path into `Review` — no owner/admin equivalent exists. |
+| GET | `/api/hotels/recommended` | User | Weighted, content-based recommendations for the logged-in user (registered before `/hotels/:id` — route order matters). |
+| POST | `/api/hotels/:id/chat` | Public | Body `{ question }` → `{ answer, matched }`. Answers from the hotel's own FAQ data and live room/amenity data only; never fabricates. |
+| PATCH | `/api/owner/hotels/:id/faqs` | Owner | Body `{ faqs: [{question, answer}] }`. Replaces the hotel's chatbot FAQ list — does not touch `status` (unlike the main hotel-edit endpoint). |
+
 ## Upload, profile, and wishlist endpoints
 
 | Method | Path | Auth | Description |
@@ -311,6 +394,8 @@ Reads `ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `server/.env` and ups
 - **Pass 1 (auth):** Full auth flow (register → verify → login → protected route → refresh → forgot/reset password → logout, plus RBAC, duplicate/weak-password/injection rejection, and independent multi-role cookie sessions) was exercised end-to-end against a real MongoDB instance during development — 30+ assertions, all passing.
 - **Pass 2 (public pages):** `npm run seed:public` was run (and re-run, to confirm it's idempotent) against a real MongoDB instance. Every new endpoint (`GET /api/hotels` with each filter/sort/pagination combination, `/featured`, `/:id`, `/:id/similar`, `/:id/reviews`, and `POST /api/contact` including its 422 validation path) was exercised directly with `curl` against the running server. The full public UI was then driven headlessly end-to-end (Home → Hotels search/filter/sort/pagination → Hotel Details → logged-out "Book Now" redirect → About/FAQ accordion/Contact submission/Privacy/Terms → 404), with screenshots captured and the browser console checked for errors at each step. The pre-existing auth pages (`/user`, `/owner`, `/admin` login/register) were re-verified to confirm the routing changes didn't regress them.
 - **Pass 4 (Admin Module):** every new endpoint exercised with `curl` as an authenticated admin — list endpoints with each filter, get-by-id, the full suspend → confirm login now 403s → activate → delete lifecycle on a throwaway user, `createOwner` end-to-end (temp password generated and logged/emailed), the delete-owner-with-hotels 400 guard, and the full approve/reject/re-approve cycle on a real seeded hotel (confirmed it disappears from and reappears on the public `/hotels` listing as its status changes). Owner and non-admin tokens confirmed 403 on every admin route. One real bug caught and fixed during this pass: the two schema fields added for this module (`User.status`, `Owner.businessName`) don't retroactively apply their Mongoose defaults to documents that existed before the schema change when read via `.lean()` — existing accounts showed `status: undefined` until a one-time backfill (`updateMany` setting the default where the field was missing) was run. The full admin UI was then driven headlessly end-to-end (dashboard → each of the four management pages → each detail page → Add Owner form), screenshots captured, console checked for errors.
+- **Pass 8 (Payments):** every `initiatePayment` guard exercised with `curl` against a real seeded booking — 400 on a still-`pending` booking, 422 on an invalid `method`, 404 on another user's booking and on no auth (401), then 503 "not configured" for both eSewa and Khalti with the current empty credentials, confirmed to leave zero orphan `Payment` documents. The Pay Now flow was then driven headlessly end-to-end (My Booking Details → Pay Now → Payment page showing the correct amount → both provider buttons surfacing the clean "not configured" toast with no crash), screenshots captured, console checked for errors. Because no real eSewa/Khalti sandbox credentials exist yet, the actual gateway round-trip (submitting the signed eSewa form / following a Khalti `payment_url` to completion) could **not** be tested — only the code paths reachable without live credentials were verified; this is flagged in [Payments](#payments) as follow-up work for once real keys are added.
+- **Pass 9 (Reviews, recommendations, chatbot):** since the API can't itself produce a past-checkout booking, a real booking was created+accepted through the normal flow and then directly backdated in MongoDB to test completion — confirmed `findEligibleBooking` grants review access even before any sweep has run, and confirmed `GET /bookings/my` sweeps `confirmed`→`completed` and correctly reports `hasReviewed`. `curl`-tested the full review write path: 403 with no eligible booking, 201 on success (with `Hotel.avgRating`/`reviewCount` actually changing), 400 on a duplicate, 403 for an owner token, 401 unauthenticated. The recommendation engine's cold-start math was unit-verified against a genuinely fresh, freshly-registered user (all seeded demo accounts turned out to already have seeded review history, which was itself a useful confirmation that personalization signal is read correctly) — its ranking matched hand-calculated Bayesian-rating scores exactly, and `GET /hotels/:id` was confirmed unaffected by the new `/hotels/recommended` route being registered ahead of it. The chatbot was tested with a matching FAQ, a structured room/amenity/location question, and an unanswerable one (confirmed the real seeded owner phone appears in the fallback, and a sane message when the owner has no phone set) — two real bugs were caught and fixed here: the room-intent keyword "available" was too generic and swallowed unrelated questions like "is parking available," and the filler word "hotel" (present in nearly every FAQ question) was inflating token-overlap scores for unrelated questions. The full flow was then driven headlessly end-to-end (chat widget open → ask → answer; dashboard showing personalized "% match" badges; a completed booking showing the write-a-review form, then "already reviewed" after submitting; owner FAQ editor save confirmed **not** to reset an approved hotel back to `pending`), screenshots captured, console checked for errors. All test bookings/reviews/FAQ edits were cleaned up and hotel ratings recomputed back to their seeded baseline afterward.
 - `npm run build --prefix client` compiles cleanly; `npm run lint --prefix client` (oxlint) shows no new warnings.
 - The real entry points (`server/server.js` and the Vite dev server) were booted together and live requests were sent through the Vite proxy to a running backend and MongoDB instance.
 - No automated test suite is included in these passes (not requested) — the checks above were manual/scripted verification during the build, not a committed test suite.
@@ -335,12 +420,12 @@ Legend: ✅ done · ⏳ scaffolded (model/route exists, not wired) · ⬜ not st
 | Hotel & Room management + Admin approval workflow | ✅ (Owner Add/Edit/Delete Hotel + Room, resubmission-on-edit; Admin approve/reject/delete — full loop. Images are real drag-and-drop uploads to local disk — see [Image uploads](#image-uploads)) |
 | Search history / recently viewed | ⬜ |
 | Booking workflow + double-booking prevention | ✅ (request/Accept/Reject flow — see [Booking flow](#booking-flow); `totalRooms`-aware overlap guard at both request and accept time is the "double-booking prevention," made real instead of a calendar UI) |
-| Payments (eSewa/Khalti) | ⬜ (bookings are confirmed by the owner directly — "pay at property" style — until sandbox credentials exist; `Booking.payment` is ready for it) |
+| Payments (eSewa/Khalti) | ✅ (pay-after-accept flow fully wired — see [Payments](#payments); graceful "not configured" 503 until real sandbox credentials are added, and the live redirect round-trip still needs smoke-testing once they are) |
 | PDF invoices | ⬜ (`Booking.invoiceNumber` is generated and shown, but nothing renders a PDF yet) |
 | Google Maps integration | ⏳ (hotel details renders a live embed if `VITE_GOOGLE_MAPS_API_KEY` is set, else a placeholder) |
-| Reviews & ratings (public display), wishlist | ⏳ (**wishlist: done** — save/unsave from Hotel Details, `/user/wishlist` list. Reviews: reading works, writing now has real bookings to gate on, but the "write a review" UI itself isn't built yet) |
-| Recommendation engine | ⬜ (public "Similar Hotels" uses simple city/amenity matching, not the full engine) |
-| AI chatbot (rule-based fallback first) | ⬜ |
+| Reviews & ratings, wishlist | ✅ (**wishlist: done.** Reviews: full read+write loop — write is gated on a completed booking, one review per hotel, owners have zero authority over ratings/reviews anywhere — see [Reviews, ratings, and recommendations](#reviews-ratings-and-recommendations)) |
+| Recommendation engine | ✅ (content-based, weighted match score across rating/budget/amenities/location/room-type, driven by genuine reviews — see [Reviews, ratings, and recommendations](#reviews-ratings-and-recommendations). "Similar Hotels" on Hotel Details is unchanged, simpler city/amenity matching — a different, hotel-to-hotel feature) |
+| Hotel-specific "Chat With Us" chatbot | ✅ (rule-based, retrieval-only — see [Hotel chatbot](#hotel-chatbot); owner-managed FAQs + live room/amenity/location data, with a fallback to the real owner phone number, never a fabricated answer) |
 | Admin/Owner/User dashboards | ✅ (**Admin** — dashboard + Manage Users/Owners/Hotels/Bookings. **Owner** — dashboard + My Hotels + Add/Edit Hotel/Room + Booking Requests. **User** — dashboard + My Bookings + Wishlist + Profile (name/email/phone/avatar/password)) |
 | UI/UX polish (dark mode, skeletons, empty states, lazy loading) | ⏳ (single light theme by design — dark mode intentionally removed, not scaffolded; loading/empty states in place on public + dashboard pages; lazy loading still pending) |
 

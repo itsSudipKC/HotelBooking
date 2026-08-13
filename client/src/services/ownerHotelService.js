@@ -13,5 +13,8 @@ export const createHotel = (token, payload) =>
 export const updateHotel = (token, id, payload) =>
   apiClient.put(`/owner/hotels/${id}`, payload, authHeader(token)).then((res) => res.data);
 
+export const updateHotelFaqs = (token, id, faqs) =>
+  apiClient.patch(`/owner/hotels/${id}/faqs`, { faqs }, authHeader(token)).then((res) => res.data);
+
 export const deleteHotel = (token, id) =>
   apiClient.delete(`/owner/hotels/${id}`, authHeader(token)).then((res) => res.data);

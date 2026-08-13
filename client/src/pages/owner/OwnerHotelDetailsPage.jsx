@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { MapPin, Users, Plus } from 'lucide-react';
+import { MapPin, Users, Plus, Trash2 } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Badge from '../../components/dashboard/Badge';
 import ImageGallery from '../../components/ImageGallery';
@@ -18,18 +18,46 @@ const OwnerHotelDetailsPage = () => {
   const { account, accessToken, toast, handleLogout } = useOwnerSession();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [faqs, setFaqs] = useState([]);
+  const [savingFaqs, setSavingFaqs] = useState(false);
 
   const load = () => {
     if (!accessToken) return;
     setLoading(true);
     ownerHotelService
       .getMyHotelById(accessToken, id)
-      .then((res) => setData(res.data))
+      .then((res) => {
+        setData(res.data);
+        setFaqs(res.data.hotel.faqs?.length ? res.data.hotel.faqs : [{ question: '', answer: '' }]);
+      })
       .catch((err) => toast.error(getErrorMessage(err)))
       .finally(() => setLoading(false));
   };
 
   useEffect(load, [accessToken, id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const updateFaqField = (index, field, value) => {
+    setFaqs((prev) => prev.map((faq, i) => (i === index ? { ...faq, [field]: value } : faq)));
+  };
+
+  const addFaqRow = () => setFaqs((prev) => [...prev, { question: '', answer: '' }]);
+
+  const removeFaqRow = (index) => setFaqs((prev) => prev.filter((_, i) => i !== index));
+
+  const handleSaveFaqs = async (e) => {
+    e.preventDefault();
+    const cleaned = faqs.map((f) => ({ question: f.question.trim(), answer: f.answer.trim() })).filter((f) => f.question && f.answer);
+    setSavingFaqs(true);
+    try {
+      await ownerHotelService.updateHotelFaqs(accessToken, id, cleaned);
+      toast.success('Chatbot FAQs updated.');
+      setFaqs(cleaned.length ? cleaned : [{ question: '', answer: '' }]);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setSavingFaqs(false);
+    }
+  };
 
   const handleDeleteHotel = async () => {
     if (!window.confirm(`Delete "${data.hotel.name}"? This also removes its rooms and reviews.`)) return;
@@ -203,6 +231,56 @@ const OwnerHotelDetailsPage = () => {
                   ))
                 )}
               </div>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900">Chatbot FAQs</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Answers your hotel&apos;s &quot;Chat With Us&quot; widget uses for guest questions (check-in/out times, parking,
+                cancellation policy, etc). Saving these does not affect your listing&apos;s approval status.
+              </p>
+              <form onSubmit={handleSaveFaqs} className="mt-4 flex flex-col gap-4">
+                {faqs.map((faq, index) => (
+                  <div key={index} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-xs font-medium text-gray-500">Question {index + 1}</label>
+                      {faqs.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeFaqRow(index)}
+                          aria-label="Remove FAQ"
+                          className="text-gray-400 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={faq.question}
+                      onChange={(e) => updateFaqField(index, 'question', e.target.value)}
+                      placeholder="e.g. What time is check-in?"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    />
+                    <textarea
+                      rows={2}
+                      value={faq.answer}
+                      onChange={(e) => updateFaqField(index, 'answer', e.target.value)}
+                      placeholder="e.g. Check-in is available from 2:00 PM."
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    />
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Button type="button" variant="secondary" className="gap-1.5" onClick={addFaqRow}>
+                    <Plus className="h-4 w-4" />
+                    Add question
+                  </Button>
+                  <Button type="submit" loading={savingFaqs}>
+                    Save FAQs
+                  </Button>
+                </div>
+              </form>
             </section>
           </div>
         </>

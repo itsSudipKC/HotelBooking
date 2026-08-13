@@ -15,3 +15,9 @@ export const hotelFormValidator = [
   body('amenities').optional().isArray().withMessage('Amenities must be a list'),
   body('imageUrls').optional().isArray().withMessage('Images must be a list'),
 ];
+
+export const hotelFaqsValidator = [
+  body('faqs').isArray().withMessage('FAQs must be a list'),
+  body('faqs.*.question').trim().notEmpty().withMessage('Each FAQ needs a question').isLength({ max: 200 }),
+  body('faqs.*.answer').trim().notEmpty().withMessage('Each FAQ needs an answer').isLength({ max: 1000 }),
+];

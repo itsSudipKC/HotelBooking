@@ -10,7 +10,7 @@ const HotelCard = ({ hotel, linkTo }) => {
       to={linkTo || `/hotels/${hotel._id}`}
       className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
     >
-      <div className="aspect-4/3 w-full overflow-hidden bg-gray-100">
+      <div className="relative aspect-4/3 w-full overflow-hidden bg-gray-100">
         {image && (
           <img
             src={image}
@@ -18,6 +18,11 @@ const HotelCard = ({ hotel, linkTo }) => {
             loading="lazy"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
+        )}
+        {typeof hotel.matchScore === 'number' && (
+          <span className="absolute right-2 top-2 rounded-full bg-brand-600 px-2 py-1 text-xs font-semibold text-white shadow-sm">
+            {Math.round(hotel.matchScore * 100)}% match
+          </span>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4">

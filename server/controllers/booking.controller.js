@@ -6,7 +6,9 @@ import Booking from '../models/Booking.model.js';
 import Room from '../models/Room.model.js';
 import Hotel from '../models/Hotel.model.js';
 import Owner from '../models/Owner.model.js';
+import Review from '../models/Review.model.js';
 import { sendBookingRequestEmail } from '../services/email.service.js';
+import { sweepCompletedBookings } from '../utils/bookingCompletion.js';
 
 const TAX_RATE = 0.13; // Nepal VAT
 
@@ -93,6 +95,8 @@ export const createBooking = asyncHandler(async (req, res) => {
 });
 
 export const listMyBookings = asyncHandler(async (req, res) => {
+  await sweepCompletedBookings({ user: req.account._id });
+
   const { status } = req.query;
   const match = { user: req.account._id };
   if (status) match.status = status;
@@ -112,6 +116,8 @@ export const getMyBookingById = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Booking not found');
   }
 
+  await sweepCompletedBookings({ user: req.account._id });
+
   const booking = await Booking.findOne({ _id: id, user: req.account._id })
     .populate('hotel', 'name images address')
     .populate('room', 'type price capacity')
@@ -120,6 +126,10 @@ export const getMyBookingById = asyncHandler(async (req, res) => {
 
   if (!booking) {
     throw new ApiError(404, 'Booking not found');
+  }
+
+  if (booking.status === 'completed') {
+    booking.hasReviewed = Boolean(await Review.exists({ user: req.account._id, hotel: booking.hotel._id }));
   }
 
   return res.status(200).json(new ApiResponse(200, { booking }));

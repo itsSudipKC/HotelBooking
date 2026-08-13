@@ -62,6 +62,17 @@ const ROOM_TYPES = [
   { type: 'Suite', price: 9000, capacity: 4 },
 ];
 
+const DEFAULT_FAQS = [
+  { question: 'What time is check-in?', answer: 'Check-in is available from 2:00 PM.' },
+  { question: 'What time is check-out?', answer: 'Check-out is before 12:00 PM.' },
+  { question: 'Does the hotel provide parking?', answer: 'Yes, free parking is available for hotel guests.' },
+  { question: 'Does the hotel have Wi-Fi?', answer: 'Yes, free Wi-Fi is available throughout the hotel.' },
+  {
+    question: 'What is the cancellation policy?',
+    answer: 'Free cancellation up to 24 hours before check-in. After that, one night is charged.',
+  },
+];
+
 const REVIEW_COMMENTS = [
   'Great location and very friendly staff. Would stay again!',
   'Clean rooms and comfortable beds. Breakfast could be better.',
@@ -130,6 +141,7 @@ const seed = async () => {
       images: [0, 1, 2, 3].map((n) => pickImage(slug, n)),
       starRating: spec.starRating,
       status: 'approved',
+      faqs: DEFAULT_FAQS,
     });
 
     const roomCount = 2 + Math.floor(Math.random() * 2);

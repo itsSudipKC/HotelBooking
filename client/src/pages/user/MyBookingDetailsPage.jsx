@@ -5,9 +5,11 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import Badge from '../../components/dashboard/Badge';
 import Spinner from '../../components/Spinner';
 import Button from '../../components/Button';
+import RatingInput from '../../components/RatingInput';
 import { useUserSession } from '../../hooks/useUserSession';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getMyBookingById, cancelBooking } from '../../services/bookingService';
+import { createReview } from '../../services/reviewService';
 
 const CANCELLABLE = ['pending', 'confirmed'];
 
@@ -17,6 +19,9 @@ const MyBookingDetailsPage = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const load = () => {
     if (!accessToken) return;
@@ -40,6 +45,26 @@ const MyBookingDetailsPage = () => {
       toast.error(getErrorMessage(err));
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!rating) {
+      toast.error('Please select a star rating.');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await createReview(accessToken, { hotelId: booking.hotel._id, rating, comment });
+      toast.success('Thanks for your review!');
+      setRating(0);
+      setComment('');
+      load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -84,6 +109,31 @@ const MyBookingDetailsPage = () => {
               <Link to={`/user/bookings/${booking._id}/pay`}>
                 <Button className="shrink-0">Pay Now</Button>
               </Link>
+            </div>
+          )}
+
+          {booking.status === 'completed' && !booking.hasReviewed && (
+            <div className="mt-4 rounded-xl border border-gray-200 bg-white p-5">
+              <h2 className="text-sm font-semibold text-gray-900">Write a review</h2>
+              <p className="mt-1 text-sm text-gray-500">Your stay is complete — let other guests know how it went.</p>
+              <form onSubmit={handleSubmitReview} className="mt-3 flex flex-col gap-3">
+                <RatingInput value={rating} onChange={setRating} />
+                <textarea
+                  rows={3}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Share details of your experience (optional)"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                />
+                <Button type="submit" loading={submittingReview} className="self-start">
+                  Submit review
+                </Button>
+              </form>
+            </div>
+          )}
+          {booking.status === 'completed' && booking.hasReviewed && (
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+              You&apos;ve already reviewed this hotel. Thanks for sharing your feedback!
             </div>
           )}
 

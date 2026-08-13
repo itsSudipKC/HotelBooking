@@ -4,6 +4,8 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import Hotel from '../models/Hotel.model.js';
 import Room from '../models/Room.model.js';
+import { getRecommendedHotels } from '../services/recommendation.service.js';
+import { answerQuestion } from '../services/hotelChatbot.service.js';
 
 const PUBLIC_OWNER_FIELDS = 'name avatar';
 
@@ -126,6 +128,29 @@ export const getHotelById = asyncHandler(async (req, res) => {
   const rooms = await Room.find({ hotel: id, isActive: true }).sort({ price: 1 }).lean();
 
   return res.status(200).json(new ApiResponse(200, { hotel, rooms }));
+});
+
+export const getRecommendedForMe = asyncHandler(async (req, res) => {
+  const limit = Math.min(20, Math.max(1, parseInt(req.query.limit, 10) || 8));
+  const hotels = await getRecommendedHotels(req.account._id, limit);
+  return res.status(200).json(new ApiResponse(200, { hotels }));
+});
+
+export const chatWithHotel = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    throw new ApiError(404, 'Hotel not found');
+  }
+
+  const hotel = await Hotel.findOne({ _id: id, status: 'approved' }).populate('owner', 'phone').lean();
+  if (!hotel) {
+    throw new ApiError(404, 'Hotel not found');
+  }
+
+  const rooms = await Room.find({ hotel: id, isActive: true }).select('type price capacity').lean();
+
+  const { answer, matched } = answerQuestion({ hotel, rooms, question: req.body.question });
+  return res.status(200).json(new ApiResponse(200, { answer, matched }));
 });
 
 export const getSimilarHotels = asyncHandler(async (req, res) => {

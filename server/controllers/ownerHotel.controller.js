@@ -106,6 +106,27 @@ export const updateHotel = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, { hotel }, 'Hotel updated.'));
 });
 
+// Deliberately separate from updateHotel: that action resets an
+// approved/rejected hotel back to 'pending' on any edit (see wasReviewed
+// above). FAQ text is chatbot-only informational content, not core listing
+// content, so it shouldn't force a live listing back into review limbo.
+export const updateHotelFaqs = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    throw new ApiError(404, 'Hotel not found');
+  }
+
+  const hotel = await Hotel.findOne({ _id: id, owner: req.account._id });
+  if (!hotel) {
+    throw new ApiError(404, 'Hotel not found');
+  }
+
+  hotel.faqs = req.body.faqs.map(({ question, answer }) => ({ question, answer }));
+  await hotel.save();
+
+  return res.status(200).json(new ApiResponse(200, { hotel }, 'FAQs updated.'));
+});
+
 export const deleteHotel = asyncHandler(async (req, res) => {
   const { id } = req.params;
   if (!mongoose.isValidObjectId(id)) {

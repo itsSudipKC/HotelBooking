@@ -5,6 +5,7 @@ import ImageGallery from '../../components/ImageGallery';
 import StarRating from '../../components/StarRating';
 import ReviewCard from '../../components/ReviewCard';
 import HotelCard from '../../components/HotelCard';
+import HotelChatWidget from '../../components/HotelChatWidget';
 import MapEmbed from '../../components/MapEmbed';
 import Spinner from '../../components/Spinner';
 import Button from '../../components/Button';
@@ -211,6 +212,7 @@ const HotelDetailsPage = () => {
             </div>
             <p className="text-sm text-gray-700">{hotel.owner?.name || 'Hotel Partner'}</p>
           </div>
+          <HotelChatWidget hotelId={hotel._id} hotelName={hotel.name} />
         </aside>
       </div>
 
