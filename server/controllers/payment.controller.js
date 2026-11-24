@@ -45,6 +45,7 @@ export const initiatePayment = asyncHandler(async (req, res) => {
   });
 
   if (method === 'esewa') {
+
     const { formUrl, fields } = esewa.buildPaymentForm({
       amount: booking.totalPrice,
       transactionUuid: transactionId,
@@ -53,6 +54,7 @@ export const initiatePayment = asyncHandler(async (req, res) => {
     });
     return res.status(200).json(new ApiResponse(200, { method, formUrl, fields }));
   }
+
 
   const data = await khalti.initiate({
     amount: booking.totalPrice,

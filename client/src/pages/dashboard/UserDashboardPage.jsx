@@ -91,6 +91,10 @@ const UserDashboardPage = () => {
             <div className="flex justify-center py-12">
               <Spinner />
             </div>
+          ) : hotels.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+              No recommended hotels available right now.
+            </div>
           ) : (
             <div className="mt-4 grid gap-6 sm:grid-cols-2">
               {hotels.map((hotel) => (

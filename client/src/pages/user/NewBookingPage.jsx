@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { MapPin, Users } from 'lucide-react';
+import { MapPin, Users, CheckCircle2 } from 'lucide-react';
 import Spinner from '../../components/Spinner';
 import Button from '../../components/Button';
 import { useUserSession } from '../../hooks/useUserSession';
@@ -29,8 +29,11 @@ const NewBookingPage = () => {
   const [notFound, setNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [checkIn, setCheckIn] = useState(todayIso());
-  const [checkOut, setCheckOut] = useState(addDaysIso(todayIso(), 1));
+  const paramCheckIn = searchParams.get('checkIn');
+  const paramCheckOut = searchParams.get('checkOut');
+
+  const [checkIn, setCheckIn] = useState(paramCheckIn || todayIso());
+  const [checkOut, setCheckOut] = useState(paramCheckOut || addDaysIso(paramCheckIn || todayIso(), 1));
   const [guests, setGuests] = useState(1);
 
   useEffect(() => {
@@ -39,7 +42,7 @@ const NewBookingPage = () => {
       setLoading(false);
       return;
     }
-    getHotelById(hotelId)
+    getHotelById(hotelId, { checkIn, checkOut })
       .then((res) => {
         const foundRoom = res.data.rooms.find((r) => r._id === roomId);
         if (!foundRoom) {
@@ -51,7 +54,7 @@ const NewBookingPage = () => {
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [hotelId, roomId]);
+  }, [hotelId, roomId, checkIn, checkOut]);
 
   const nights = useMemo(() => {
     const diff = (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24);
@@ -62,10 +65,18 @@ const NewBookingPage = () => {
   const taxes = Math.round(roomPrice * TAX_RATE);
   const totalPrice = roomPrice + taxes;
 
+  const totalRooms = room?.totalRooms || 1;
+  const bookedRooms = room?.bookedCount !== undefined ? room.bookedCount : 0;
+  const availableRooms = room?.availableCount !== undefined ? room.availableCount : Math.max(0, totalRooms - bookedRooms);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (nights <= 0) {
       toast.error('Check-out date must be after check-in date.');
+      return;
+    }
+    if (availableRooms <= 0) {
+      toast.error('the room is not available for this time you can try to book another room or another date');
       return;
     }
     setSubmitting(true);
@@ -165,6 +176,31 @@ const NewBookingPage = () => {
               </div>
             </div>
 
+            {/* Room Availability Status for Chosen Dates */}
+            <div className={`rounded-xl border p-4 space-y-2 ${availableRooms > 0 ? 'bg-emerald-50/80 border-emerald-200' : 'bg-red-50/60 border-red-200'}`}>
+              <div className="flex items-center justify-between text-xs font-medium">
+                <span className="text-gray-700 font-semibold">Live Availability for Selected Dates:</span>
+                <span className={`font-bold ${availableRooms > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                  {availableRooms > 0 ? `${availableRooms} of ${totalRooms} rooms available` : 'Fully Booked'}
+                </span>
+              </div>
+              {availableRooms > 0 ? (
+                <p className="text-xs font-semibold text-emerald-800 flex items-center gap-1.5 mt-1">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  This room is available for your selected dates!
+                </p>
+              ) : (
+                <p className="text-xs font-medium text-red-700 mt-1">
+                  ⚠️ the room is not available for this time you can try to book another room or another date
+                </p>
+              )}
+              <div className="flex gap-4 text-xs text-gray-600 pt-1 border-t border-emerald-100">
+                <span>Total: <strong className="text-gray-900">{totalRooms}</strong></span>
+                <span>Booked: <strong className="text-amber-700">{bookedRooms}</strong></span>
+                <span>Available: <strong className={availableRooms > 0 ? 'text-emerald-700' : 'text-red-700'}>{availableRooms}</strong></span>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-1">
               <label htmlFor="guests" className="text-sm font-medium text-gray-700">
                 Guests
@@ -184,8 +220,8 @@ const NewBookingPage = () => {
               </p>
             </div>
 
-            <Button type="submit" loading={submitting} disabled={nights <= 0}>
-              Request to book
+            <Button type="submit" loading={submitting} disabled={nights <= 0 || availableRooms <= 0}>
+              {availableRooms <= 0 ? 'Not Available for Dates' : 'Request to book'}
             </Button>
             <p className="text-xs text-gray-400">
               This sends a request to the hotel — you&apos;ll be notified once they confirm or decline it.

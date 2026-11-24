@@ -430,3 +430,5 @@ Legend: ✅ done · ⏳ scaffolded (model/route exists, not wired) · ⬜ not st
 | UI/UX polish (dark mode, skeletons, empty states, lazy loading) | ⏳ (single light theme by design — dark mode intentionally removed, not scaffolded; loading/empty states in place on public + dashboard pages; lazy loading still pending) |
 
 Each remaining item will be built and explained as its own module, with your approval before moving to the next — per the project's own development rules.
+#   H o t e l B o o k i n g  
+ 

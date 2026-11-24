@@ -20,7 +20,7 @@ const HotelCard = ({ hotel, linkTo }) => {
           />
         )}
         {typeof hotel.matchScore === 'number' && (
-          <span className="absolute right-2 top-2 rounded-full bg-brand-600 px-2 py-1 text-xs font-semibold text-white shadow-sm">
+          <span className="absolute right-2 top-2 rounded-full bg-brand-600 px-2 py-1 text-xs font-semibold hidden text-white shadow-sm">
             {Math.round(hotel.matchScore * 100)}% match
           </span>
         )}

@@ -65,7 +65,7 @@ export const acceptBooking = asyncHandler(async (req, res) => {
     checkOut: { $gt: booking.checkIn },
   });
   if (overlaps >= room.totalRooms) {
-    throw new ApiError(409, 'This room has since been fully booked for these dates — reject this request instead.');
+    throw new ApiError(409, 'the room is not available for this time you can try to book another room or another date');
   }
 
   booking.status = 'confirmed';

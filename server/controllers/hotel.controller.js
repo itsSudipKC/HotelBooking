@@ -4,8 +4,10 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import Hotel from '../models/Hotel.model.js';
 import Room from '../models/Room.model.js';
+import Booking from '../models/Booking.model.js';
 import { getRecommendedHotels } from '../services/recommendation.service.js';
 import { answerQuestion } from '../services/hotelChatbot.service.js';
+import { sweepCompletedBookings } from '../utils/bookingCompletion.js';
 
 const PUBLIC_OWNER_FIELDS = 'name avatar';
 
@@ -109,9 +111,12 @@ export const getFeaturedHotels = asyncHandler(async (req, res) => {
 
 export const getHotelById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const { checkIn, checkOut } = req.query;
   if (!mongoose.isValidObjectId(id)) {
     throw new ApiError(404, 'Hotel not found');
   }
+
+  await sweepCompletedBookings({ hotel: id });
 
   const hotel = await Hotel.findOneAndUpdate(
     { _id: id, status: 'approved' },
@@ -127,7 +132,44 @@ export const getHotelById = asyncHandler(async (req, res) => {
 
   const rooms = await Room.find({ hotel: id, isActive: true }).sort({ price: 1 }).lean();
 
-  return res.status(200).json(new ApiResponse(200, { hotel, rooms }));
+  const now = new Date();
+  const checkInDate = checkIn ? new Date(checkIn) : null;
+  const checkOutDate = checkOut ? new Date(checkOut) : null;
+  const hasCustomDates = Boolean(
+    checkInDate &&
+    checkOutDate &&
+    !isNaN(checkInDate.getTime()) &&
+    !isNaN(checkOutDate.getTime()) &&
+    checkOutDate > checkInDate
+  );
+
+  const roomsWithAvailability = await Promise.all(
+    rooms.map(async (room) => {
+      const match = {
+        room: room._id,
+        status: { $in: ['pending', 'confirmed'] },
+      };
+
+      if (hasCustomDates) {
+        match.checkIn = { $lt: checkOutDate };
+        match.checkOut = { $gt: checkInDate };
+      } else {
+        match.checkIn = { $lte: now };
+        match.checkOut = { $gt: now };
+      }
+
+      const bookedCount = await Booking.countDocuments(match);
+      const availableCount = Math.max(0, (room.totalRooms || 1) - bookedCount);
+
+      return {
+        ...room,
+        bookedCount,
+        availableCount,
+      };
+    })
+  );
+
+  return res.status(200).json(new ApiResponse(200, { hotel, rooms: roomsWithAvailability }));
 });
 
 export const getRecommendedForMe = asyncHandler(async (req, res) => {

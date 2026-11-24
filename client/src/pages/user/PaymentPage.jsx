@@ -92,7 +92,7 @@ const PaymentPage = () => {
             <Button loading={payingWith === 'esewa'} disabled={Boolean(payingWith)} onClick={() => pay('esewa')} className="justify-center">
               Pay with eSewa
             </Button>
-            <Button
+            {/* <Button
               variant="secondary"
               loading={payingWith === 'khalti'}
               disabled={Boolean(payingWith)}
@@ -100,7 +100,7 @@ const PaymentPage = () => {
               className="justify-center text-purple-700"
             >
               Pay with Khalti
-            </Button>
+            </Button> */}
           </div>
           <p className="mt-4 text-xs text-gray-400">You&apos;ll be redirected to your chosen provider to complete the payment securely.</p>
         </div>

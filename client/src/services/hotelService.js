@@ -10,7 +10,7 @@ export const getFeaturedHotels = (limit) =>
 export const getRecommendedHotels = (token, limit) =>
   apiClient.get('/hotels/recommended', { ...authHeader(token), params: { limit } }).then((res) => res.data);
 
-export const getHotelById = (id) => apiClient.get(`/hotels/${id}`).then((res) => res.data);
+export const getHotelById = (id, params) => apiClient.get(`/hotels/${id}`, { params }).then((res) => res.data);
 
 export const getSimilarHotels = (id) => apiClient.get(`/hotels/${id}/similar`).then((res) => res.data);
 

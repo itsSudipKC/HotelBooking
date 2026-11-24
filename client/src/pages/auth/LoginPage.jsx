@@ -30,7 +30,12 @@ const LoginPage = ({ role }) => {
     try {
       await login(form);
       toast.success('Logged in successfully.');
-      navigate(location.state?.from || `/${role}/dashboard`);
+
+      const destination =
+        location.state?.from ||
+        (role === 'user' ? '/' : `/${role}/dashboard`);
+
+      navigate(destination);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

@@ -3,6 +3,7 @@ import Room from '../models/Room.model.js';
 import Booking from '../models/Booking.model.js';
 import Review from '../models/Review.model.js';
 import Wishlist from '../models/Wishlist.model.js';
+import Owner from '../models/Owner.model.js';
 
 // Content-based, weighted match score. Computed on-demand — the catalog is
 // small enough (tens of hotels) that this needs no batch job or vector
@@ -18,12 +19,10 @@ export const getRecommendedHotels = async (userId, limit = 8) => {
       .populate('room', 'type')
       .lean(),
     Wishlist.findOne({ user: userId }).populate('hotels', 'address amenities').lean(),
-    Review.find({ user: userId, rating: { $gte: 4 } }).populate('hotel', 'address amenities').lean(),
+    Review.find({ user: userId, rating: { $gte: 3 } }).populate('hotel', 'address amenities').lean(),
   ]);
 
   if (!approvedHotels.length) return [];
-
-  const excludedHotelIds = new Set(userBookings.map((b) => String(b.hotel?._id || b.hotel)));
 
   const globalAvgRating =
     approvedHotels.reduce((sum, h) => sum + (h.avgRating || 0), 0) / approvedHotels.length || 0;
@@ -62,7 +61,6 @@ export const getRecommendedHotels = async (userId, limit = 8) => {
   }
 
   const scored = approvedHotels
-    .filter((h) => !excludedHotelIds.has(String(h._id)))
     .map((hotel) => {
       const hRooms = roomsByHotel.get(String(hotel._id)) || [];
       const startingPrice = hRooms.length ? Math.min(...hRooms.map((r) => r.price)) : null;

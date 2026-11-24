@@ -14,10 +14,10 @@ const TAX_RATE = 0.13; // Nepal VAT
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-const countConfirmedOverlaps = (roomId, checkIn, checkOut) =>
+const countOverlappingBookings = (roomId, checkIn, checkOut) =>
   Booking.countDocuments({
     room: roomId,
-    status: 'confirmed',
+    status: { $in: ['pending', 'confirmed'] },
     checkIn: { $lt: checkOut },
     checkOut: { $gt: checkIn },
   });
@@ -54,9 +54,9 @@ export const createBooking = asyncHandler(async (req, res) => {
     throw new ApiError(400, `This room fits up to ${room.capacity} guests`);
   }
 
-  const overlaps = await countConfirmedOverlaps(room._id, checkIn, checkOut);
+  const overlaps = await countOverlappingBookings(room._id, checkIn, checkOut);
   if (overlaps >= room.totalRooms) {
-    throw new ApiError(400, 'This room is fully booked for the selected dates');
+    throw new ApiError(400, 'the room is not available for this time you can try to book another room or another date');
   }
 
   const nights = Math.round((checkOut - checkIn) / MS_PER_DAY);
